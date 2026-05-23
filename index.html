@@ -574,23 +574,23 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
         <h2 class="panel-title">Настройки</h2>
         <div class="option-row">
             <span class="option-label">Музыка</span>
-            <input type="range" min="0" max="100" value="80" id="opt-music" class="option-input">
-            <span class="option-value" id="opt-music-val">80%</span>
+            <input type="range" min="0" max="100" value="40" id="opt-music" class="option-input">
+            <span class="option-value" id="opt-music-val">40%</span>
         </div>
         <div class="option-row">
             <span class="option-label">Эмбиент</span>
-            <input type="range" min="0" max="100" value="70" id="opt-ambient" class="option-input">
-            <span class="option-value" id="opt-ambient-val">70%</span>
+            <input type="range" min="0" max="100" value="40" id="opt-ambient" class="option-input">
+            <span class="option-value" id="opt-ambient-val">40%</span>
         </div>
         <div class="option-row">
             <span class="option-label">Звуки</span>
-            <input type="range" min="0" max="100" value="90" id="opt-sfx" class="option-input">
-            <span class="option-value" id="opt-sfx-val">90%</span>
+            <input type="range" min="0" max="100" value="40" id="opt-sfx" class="option-input">
+            <span class="option-value" id="opt-sfx-val">40%</span>
         </div>
         <div class="option-row">
             <span class="option-label">Скорость текста</span>
-            <input type="range" min="0" max="100" value="50" id="opt-speed" class="option-input">
-            <span class="option-value" id="opt-speed-val">50%</span>
+            <input type="range" min="0" max="100" value="90" id="opt-speed" class="option-input">
+            <span class="option-value" id="opt-speed-val">90%</span>
         </div>
         <button class="back-btn" onclick="VN.hideOptions()">Назад</button>
     </div>
@@ -700,6 +700,31 @@ narrator("Тест завершён. Спасибо за просмотр!")
 `;
 
 // ============================================================
+// УТИЛИТА: Fetch без кэширования
+// ============================================================
+function fetchNoCache(url, options = {}) {
+    // Добавляем timestamp для cache-busting
+    const separator = url.includes('?') ? '&' : '?';
+    const cacheBustedUrl = `${url}${separator}_t=${Date.now()}`;
+    
+    // Добавляем заголовки для полного отключения кэша
+    const noCacheHeaders = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    };
+    
+    return fetch(cacheBustedUrl, {
+        ...options,
+        headers: {
+            ...noCacheHeaders,
+            ...(options.headers || {})
+        },
+        cache: 'no-store'
+    });
+}
+
+// ============================================================
 // МЕНЕДЖЕР РЕСУРСОВ
 // Пробует локальный API, при неудаче переходит на фоллбэки
 // ============================================================
@@ -712,7 +737,7 @@ const Resources = {
 
     async init() {
         try {
-            const res = await fetch('/api/resources');
+            const res = await fetchNoCache('/api/resources');
             if (!res.ok) throw new Error('no api');
             this.data = await res.json();
             this.hasApi = true;
@@ -1162,7 +1187,7 @@ const VN = {
     currentTextIndex: 0,
     waitingForClick: false,
 
-    settings: { volMusic: 80, volAmbient: 70, volSfx: 90, textSpeed: 50 },
+    settings: { volMusic: 40, volAmbient: 40, volSfx: 40, textSpeed: 90 },
 
     dom: {},
     isRunning: false,
@@ -1276,7 +1301,7 @@ const VN = {
             : FALLBACKS.menuBg;
 
         if (menuBg) {
-            this.dom.menuBg.style.backgroundImage = `url('bg/${menuBg}')`;
+            this.dom.menuBg.style.backgroundImage = `url('bg/${menuBg}?_t=${Date.now()}')`;
         }
 
         // Музыка меню
@@ -1286,7 +1311,7 @@ const VN = {
                 : FALLBACKS.menuMusic;
 
             if (menuMusic) {
-                this.currentMusic = new Audio('audio/music/' + menuMusic);
+                this.currentMusic = new Audio('audio/music/' + menuMusic + '?_t=' + Date.now());
                 this.currentMusic.loop = true;
                 this.currentMusic.volume = this.settings.volMusic / 100;
                 // Автовоспроизведение только после взаимодействия пользователя
@@ -1343,7 +1368,7 @@ const VN = {
                 resolve();
             };
             img.onerror = () => { loaded++; resolve(); };
-            img.src = url;
+            img.src = url + '?_t=' + Date.now();
         })));
     },
 
@@ -1380,7 +1405,7 @@ const VN = {
         this.dom.menu.classList.add('hidden');
         this.showLoading();
         try {
-            const response = await fetch(`scenarios/${name}`);
+            const response = await fetchNoCache(`scenarios/${name}`);
             if (!response.ok) throw new Error(`Не удалось загрузить сценарий: ${name}`);
             const code = await response.text();
             const parser = new ScenarioParser();
@@ -1483,7 +1508,7 @@ const VN = {
 
     cmdBg(cmd) {
         if (!cmd.file) { this.executeNext(); return; }
-        const url = 'bg/' + cmd.file;
+        const url = 'bg/' + cmd.file + '?_t=' + Date.now();
         const dur = cmd.fade || 0.8;
         this.dom.bgNext.style.backgroundImage = `url('${url}')`;
         this.dom.bgNext.style.transition = `opacity ${dur}s ease-in-out`;
@@ -1523,7 +1548,7 @@ const VN = {
         }
         if (!cmd.file) { this.executeNext(); return; }
 
-        const audio = new Audio('audio/music/' + cmd.file);
+        const audio = new Audio('audio/music/' + cmd.file + '?_t=' + Date.now());
         audio.loop = true;
         audio.volume = 0;
         if (cmd.start) audio.currentTime = cmd.start;
@@ -1541,7 +1566,7 @@ const VN = {
     cmdAmbient(cmd) {
         if (this.currentAmbient) { this.currentAmbient.pause(); this.currentAmbient = null; }
         if (!cmd.file) { this.executeNext(); return; }
-        const audio = new Audio('audio/ambient/' + cmd.file);
+        const audio = new Audio('audio/ambient/' + cmd.file + '?_t=' + Date.now());
         audio.loop = true;
         audio.volume = (cmd.volume || 1) * this.settings.volAmbient / 100;
         this.currentAmbient = audio;
@@ -1551,7 +1576,7 @@ const VN = {
 
     cmdSfx(cmd) {
         if (!cmd.file) { this.executeNext(); return; }
-        const audio = new Audio('audio/sfx/' + cmd.file);
+        const audio = new Audio('audio/sfx/' + cmd.file + '?_t=' + Date.now());
         audio.volume = (cmd.volume || 1) * this.settings.volSfx / 100;
         audio.play().catch(e => console.warn('SFX:', e));
         this.executeNext();
@@ -1622,11 +1647,12 @@ const VN = {
 
     setSpriteImage(container, filename, transition, onComplete) {
         const inner = container.querySelector('.sprite-inner');
-        const url = 'sprites/' + filename;
+        const url = 'sprites/' + filename + '?_t=' + Date.now();
 
         let img;
-        if (this.imageCache[url]) {
-            img = this.imageCache[url].cloneNode();
+        const cacheKey = 'sprites/' + filename;
+        if (this.imageCache[cacheKey]) {
+            img = this.imageCache[cacheKey].cloneNode();
         } else {
             img = new Image();
             img.src = url;
