@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VN Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Raleway:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --textbox-width: 72%;
+    --textbox-height: 24vh;
+    --transition-fast: 0.12s;
+    --transition-normal: 0.3s;
+    --transition-slow: 0.6s;
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0, 0, 0.2, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    background: #0a0a0f; font-family: 'Raleway', sans-serif;
+}
+
+#game {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+}
+
+.bg-layer {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    will-change: opacity, transform;
+}
+#bg-current { z-index: 1; }
+#bg-next { z-index: 2; opacity: 0; pointer-events: none; }
+
+#sprites-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.sprite {
+    position: absolute;
+    bottom: -25vh;
+    will-change: transform, opacity, left;
+    opacity: 0;
+    transition: opacity 0.4s ease-out;
+    pointer-events: none;
+}
+
+.sprite.visible { opacity: 1; }
+.sprite.hiding { opacity: 0; transition: opacity 0.3s ease-out; }
+
+.sprite-inner {
+    transform-origin: center top;
+    will-change: transform, filter;
+    transition: transform 0.3s var(--ease-smooth), filter 0.3s ease;
+}
+
+.sprite img {
+    display: block;
+    height: 125vh;
+    width: auto;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    margin: 0 auto;
+}
+
+.sprite { transform: translateX(-50%); }
+
+#daytime-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    pointer-events: none;
+    transition: background var(--transition-slow) var(--ease-smooth);
+}
+
+#flash-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#fade-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 99;
+    opacity: 0;
+    pointer-events: none;
+    background: #000;
+}
+
+#textbox {
+    position: absolute;
+    bottom: 2.5vh;
+    left: 50%;
+    transform: translateX(-50%);
+    width: var(--textbox-width);
+    max-width: 1100px;
+    min-height: var(--textbox-height);
+    z-index: 50;
+    background: linear-gradient(
+        180deg,
+        rgba(8, 8, 20, 0.88) 0%,
+        rgba(8, 8, 20, 0.94) 100%
+    );
+    border-radius: 16px;
+    padding: 1.6em 2.5em 1.8em;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal) var(--ease-out);
+    box-shadow:
+        0 -4px 30px rgba(0,0,0,0.4),
+        0 8px 40px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+#textbox.visible { opacity: 1; pointer-events: auto; }
+
+#speaker {
+    font-family: 'Playfair Display', 'Georgia', serif;
+    font-size: clamp(1.2em, 2.8vw, 1.5em);
+    font-weight: 600;
+    margin-bottom: 0.5em;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.9);
+    letter-spacing: 0.5px;
+    min-height: 1.4em;
+    transition: color var(--transition-fast) ease;
+}
+
+#dialogue {
+    font-family: 'Merriweather', Georgia, serif;
+    font-size: clamp(1.1em, 2.4vw, 1.35em);
+    line-height: 1.75;
+    color: rgba(255,255,255,0.94);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+    flex: 1;
+    overflow: hidden;
+}
+
+#continue-indicator {
+    position: absolute;
+    bottom: 1em;
+    right: 2em;
+    width: 12px;
+    height: 12px;
+    opacity: 0;
+    transition: opacity var(--transition-fast) ease;
+}
+
+#continue-indicator.visible { opacity: 0.6; }
+
+#continue-indicator::before,
+#continue-indicator::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 12px;
+    height: 2px;
+    background: #fff;
+    border-radius: 1px;
+}
+
+#continue-indicator::before {
+    top: 4px;
+    transform: rotate(45deg);
+    transform-origin: left center;
+}
+
+#continue-indicator::after {
+    top: 4px;
+    transform: rotate(-45deg);
+    transform-origin: right center;
+    left: auto;
+    right: 0;
+}
+
+#continue-indicator.visible { animation: indicator-bounce 1s ease-in-out infinite; }
+
+@keyframes indicator-bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(3px); }
+}
+
+#choice-container {
+    position: absolute;
+    top: 38%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.9em;
+    z-index: 60;
+    min-width: 300px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal) var(--ease-out);
+}
+
+#choice-container.visible { opacity: 1; pointer-events: auto; }
+
+.choice-btn {
+    padding: 1.1em 2.2em;
+    font-family: 'Raleway', sans-serif;
+    font-size: clamp(1.05em, 2.2vw, 1.2em);
+    font-weight: 600;
+    background: rgba(15, 15, 30, 0.9);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all var(--transition-fast) var(--ease-smooth);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    backdrop-filter: blur(12px);
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transform: translateY(0);
+}
+
+.choice-btn:hover {
+    background: rgba(45, 45, 80, 0.95);
+    border-color: rgba(255,255,255,0.35);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+}
+
+.choice-btn:active { transform: translateY(0) scale(0.98); }
+
+#menu {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+    opacity: 1;
+    transition: opacity var(--transition-normal) var(--ease-out);
+}
+
+#menu.hidden { opacity: 0; pointer-events: none; }
+
+#menu-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(4px) brightness(0.55);
+}
+
+#menu-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.55) 100%);
+}
+
+#menu-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1em;
+}
+
+#menu-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(2.2em, 8vw, 4.5em);
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 1.4em;
+    text-shadow:
+        2px 2px 0 rgba(0,0,0,0.9),
+        4px 4px 25px rgba(0,0,0,0.9),
+        0 0 50px rgba(80,80,130,0.35);
+    letter-spacing: 3px;
+    text-align: center;
+}
+
+.menu-btn {
+    padding: 1em 2.8em;
+    font-family: 'Raleway', sans-serif;
+    font-size: clamp(1.05em, 2.5vw, 1.25em);
+    font-weight: 600;
+    background: rgba(20, 20, 40, 0.85);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #fff;
+    cursor: pointer;
+    border-radius: 10px;
+    min-width: 260px;
+    transition: all var(--transition-fast) var(--ease-smooth);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.menu-btn:hover {
+    background: rgba(50,50,85,0.9);
+    border-color: rgba(255,255,255,0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+
+.panel {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 8, 18, 0.96);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 250;
+    padding: 2em;
+    backdrop-filter: blur(15px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal) var(--ease-out);
+}
+
+.panel.active { opacity: 1; pointer-events: auto; }
+
+.panel-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.6em, 4vw, 2.2em);
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 1.5em;
+}
+
+.option-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5em;
+    width: 100%;
+    max-width: 420px;
+    margin-bottom: 1em;
+}
+
+.option-label {
+    flex: 1;
+    font-size: clamp(0.95em, 2vw, 1.1em);
+    color: #bbb;
+    font-weight: 500;
+}
+
+.option-input { flex: 1.3; }
+
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.12);
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #a0b0ff, #7080dd);
+    box-shadow: 0 2px 8px rgba(100,120,200,0.4);
+    transition: transform 0.1s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
+
+.option-value {
+    width: 50px;
+    text-align: right;
+    color: #888;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+.back-btn {
+    margin-top: 1.8em;
+    padding: 0.8em 2.2em;
+    font-size: 1.05em;
+    font-weight: 600;
+    background: rgba(60,30,35,0.85);
+    border: 1px solid rgba(255,120,130,0.25);
+    color: #ffbbbb;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all var(--transition-fast);
+}
+
+.back-btn:hover {
+    background: rgba(90,45,50,0.9);
+    border-color: rgba(255,130,140,0.45);
+}
+
+#scenarios-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7em;
+    max-height: 55vh;
+    overflow-y: auto;
+    padding: 0.5em;
+}
+
+.scenario-btn {
+    padding: 1em 2.2em;
+    font-size: clamp(1em, 2vw, 1.1em);
+    font-weight: 500;
+    background: rgba(35,35,55,0.85);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: #fff;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all var(--transition-fast);
+    min-width: 240px;
+    text-align: center;
+}
+
+.scenario-btn:hover {
+    background: rgba(60,60,90,0.9);
+    border-color: rgba(255,255,255,0.35);
+    transform: translateY(-1px);
+}
+
+#click-area {
+    position: absolute;
+    inset: 0;
+    z-index: 45;
+    cursor: pointer;
+    pointer-events: none;
+}
+
+#click-area.active { pointer-events: auto; }
+
+#loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 300;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+#loading-overlay.visible { opacity: 1; pointer-events: auto; }
+
+#loading-text {
+    color: #fff;
+    font-size: 1.3em;
+    font-weight: 500;
+}
+
+#custom-styles { display: none; }
+
+@keyframes sprite-shake {
+    0%, 100% { transform: translateX(0) rotate(0) scale(var(--sprite-scale, 1)); }
+    15% { transform: translateX(-5px) rotate(-0.5deg) scale(var(--sprite-scale, 1)); }
+    30% { transform: translateX(5px) rotate(0.5deg) scale(var(--sprite-scale, 1)); }
+    45% { transform: translateX(-4px) rotate(-0.3deg) scale(var(--sprite-scale, 1)); }
+    60% { transform: translateX(4px) rotate(0.3deg) scale(var(--sprite-scale, 1)); }
+    75% { transform: translateX(-2px) rotate(-0.1deg) scale(var(--sprite-scale, 1)); }
+    90% { transform: translateX(2px) rotate(0.1deg) scale(var(--sprite-scale, 1)); }
+}
+
+@keyframes sprite-pulse {
+    0%, 100% { transform: scale(var(--sprite-scale, 1)); }
+    50% { transform: scale(calc(var(--sprite-scale, 1) * 1.04)); }
+}
+
+@keyframes sprite-bounce {
+    0%, 100% { transform: translateY(0) scale(var(--sprite-scale, 1)); }
+    35% { transform: translateY(-22px) scale(var(--sprite-scale, 1)); }
+    55% { transform: translateY(-18px) scale(var(--sprite-scale, 1)); }
+    75% { transform: translateY(-22px) scale(var(--sprite-scale, 1)); }
+}
+
+@keyframes sprite-glow {
+    0%, 100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+    50% { filter: brightness(1.15) drop-shadow(0 0 25px rgba(255,255,200,0.5)); }
+}
+
+@keyframes sprite-tremble {
+    0%, 100% { transform: translateX(0) scale(var(--sprite-scale, 1)); }
+    25% { transform: translateX(-2px) scale(var(--sprite-scale, 1)); }
+    75% { transform: translateX(2px) scale(var(--sprite-scale, 1)); }
+}
+
+@keyframes sprite-float {
+    0%, 100% { transform: translateY(0) scale(var(--sprite-scale, 1)); }
+    50% { transform: translateY(-12px) scale(var(--sprite-scale, 1)); }
+}
+
+@keyframes sprite-sway {
+    0%, 100% { transform: rotate(0deg) scale(var(--sprite-scale, 1)); }
+    25% { transform: rotate(1.5deg) scale(var(--sprite-scale, 1)); }
+    75% { transform: rotate(-1.5deg) scale(var(--sprite-scale, 1)); }
+}
+
+@keyframes sprite-hop {
+    0%, 100% { transform: translateY(0) scale(var(--sprite-scale, 1)); }
+    50% { transform: translateY(-8px) scale(calc(var(--sprite-scale, 1) * 1.02)); }
+}
+
+@keyframes sprite-nod {
+    0%, 100% { transform: translateY(0) scale(var(--sprite-scale, 1)); }
+    30% { transform: translateY(5px) scale(var(--sprite-scale, 1)); }
+    60% { transform: translateY(3px) scale(var(--sprite-scale, 1)); }
+}
+
+@keyframes screen-shake {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-7px, -4px); }
+    20% { transform: translate(6px, 3px); }
+    30% { transform: translate(-5px, 2px); }
+    40% { transform: translate(5px, -3px); }
+    50% { transform: translate(-4px, 4px); }
+    60% { transform: translate(4px, -2px); }
+    70% { transform: translate(-2px, 2px); }
+    80% { transform: translate(2px, -1px); }
+    90% { transform: translate(-1px, 1px); }
+}
+
+.screen-shake { animation: screen-shake 0.5s ease-out; }
+#chromakey-canvas { display: none; }
+</style>
+</head>
+<body>
+<div id="game">
+    <div id="bg-current" class="bg-layer"></div>
+    <div id="bg-next" class="bg-layer"></div>
+    <div id="sprites-layer"></div>
+    <div id="daytime-overlay"></div>
+    <div id="flash-overlay"></div>
+    <div id="fade-overlay"></div>
+    <div id="click-area"></div>
+    <div id="textbox">
+        <div id="speaker"></div>
+        <div id="dialogue"></div>
+        <div id="continue-indicator"></div>
+    </div>
+    <div id="choice-container"></div>
+    <div id="loading-overlay">
+        <div id="loading-text">Загрузка...</div>
+    </div>
+    <div id="menu">
+        <div id="menu-bg"></div>
+        <div id="menu-overlay"></div>
+        <div id="menu-content">
+            <h1 id="menu-title">VN Engine</h1>
+            <button class="menu-btn" onclick="VN.startTest()">Тестовый сценарий</button>
+            <button class="menu-btn" onclick="VN.showScenarios()">Выбрать сценарий</button>
+            <button class="menu-btn" onclick="VN.showOptions()">Опции</button>
+        </div>
+    </div>
+    <div id="options-panel" class="panel">
+        <h2 class="panel-title">Настройки</h2>
+        <div class="option-row">
+            <span class="option-label">Музыка</span>
+            <input type="range" min="0" max="100" value="80" id="opt-music" class="option-input">
+            <span class="option-value" id="opt-music-val">80%</span>
+        </div>
+        <div class="option-row">
+            <span class="option-label">Эмбиент</span>
+            <input type="range" min="0" max="100" value="70" id="opt-ambient" class="option-input">
+            <span class="option-value" id="opt-ambient-val">70%</span>
+        </div>
+        <div class="option-row">
+            <span class="option-label">Звуки</span>
+            <input type="range" min="0" max="100" value="90" id="opt-sfx" class="option-input">
+            <span class="option-value" id="opt-sfx-val">90%</span>
+        </div>
+        <div class="option-row">
+            <span class="option-label">Скорость текста</span>
+            <input type="range" min="0" max="100" value="50" id="opt-speed" class="option-input">
+            <span class="option-value" id="opt-speed-val">50%</span>
+        </div>
+        <button class="back-btn" onclick="VN.hideOptions()">Назад</button>
+    </div>
+    <div id="scenario-panel" class="panel">
+        <h2 class="panel-title">Выберите сценарий</h2>
+        <div id="scenarios-container"></div>
+        <button class="back-btn" onclick="VN.hideScenarios()">Назад</button>
+    </div>
+</div>
+<canvas id="chromakey-canvas"></canvas>
+<style id="custom-styles"></style>
+
+<script>
+'use strict';
+
+// ============================================================
+// КОНФИГ — фоллбэки для GitHub Pages
+// (когда нет локального API и рандом недоступен)
+// ============================================================
+const FALLBACKS = {
+    bg:        'ext_beach_sunset.jpg',
+    sprites:   'рита_весёлая_приветствует.png',
+    music:     'a_promise_from_distant_days.ogg',
+    menuMusic: 'blow_with_the_fires.ogg',
+    menuBg:    'ext_beach_sunset.jpg',
+    scenarios: ['rita.py']
+};
+
+// Тестовый сценарий (встроен в HTML)
+const TEST_SCENARIO = `
+chromakey(None)
+narrator = C("", "#ffffff")
+hero = C("Тестовый персонаж", "#ffcc00")
+
+bg("__random__")
+music("__random__", fade_in=2)
+
+narrator("Добро пожаловать в тестовый сценарий VN Engine v2.0!")
+
+sprite("hero", "__random__", "center")
+daytime("day")
+
+hero("Привет! Я демонстрирую возможности движка.")
+
+fx("hero", "shake", 0.5)
+hero("Эффект тряски!")
+
+fx("hero", "pulse", 1)
+hero("Пульсация!")
+
+fx("hero", "bounce")
+hero("Подпрыгивание!")
+
+fx("hero", "sway", 1.5)
+hero("Покачивание!")
+
+daytime("sunset")
+narrator("Закат...")
+
+move("hero", "left", 0.8)
+hero("Я переместился влево.")
+
+move("hero", "right", 0.8)
+hero("А теперь вправо.")
+
+move("hero", "center", 0.5)
+
+screen("shake", 0.4)
+hero("Тряска всего экрана!")
+
+daytime("night")
+narrator("Наступила ночь...")
+
+fx("hero", "zoom", 1.3, 0.5)
+hero("Приближение к лицу!")
+
+fx("hero", "zoom", 1.0, 0.5)
+hero("Возврат.")
+
+set("test_flag", True)
+if_("test_flag"): hero("Флаги работают корректно!")
+
+add("points", 5)
+if_cmp("points", ">=", 3): hero("Условия тоже работают!")
+
+screen("flash", 0.3)
+narrator("Вспышка!")
+
+choice("Продолжить демонстрацию", "cont", "Завершить тест", "end")
+
+label("cont")
+fx("hero", "glow", 1.5)
+hero("Эффект свечения!")
+daytime("dawn")
+narrator("Рассвет...")
+jump("fin")
+
+label("end")
+hero("Завершаем тестовый сценарий.")
+
+label("fin")
+fade_out("black", 1.5)
+daytime("day")
+clear(0.3)
+fade_in(1.5)
+narrator("Тест завершён. Спасибо за просмотр!")
+`;
+
+// ============================================================
+// МЕНЕДЖЕР РЕСУРСОВ
+// Пробует локальный API, при неудаче переходит на фоллбэки
+// ============================================================
+const Resources = {
+    // Список ресурсов — заполняется при инициализации
+    data: null,
+
+    // Работаем ли через локальный Python-сервер
+    hasApi: false,
+
+    async init() {
+        try {
+            const res = await fetch('/api/resources');
+            if (!res.ok) throw new Error('no api');
+            this.data = await res.json();
+            this.hasApi = true;
+            console.log('✓ Локальный сервер — полный доступ к ресурсам');
+        } catch {
+            this.data = null;
+            this.hasApi = false;
+            console.log('ℹ Локальный сервер недоступен — используем фоллбэки');
+        }
+    },
+
+    // Получить случайный файл из категории
+    // Если рандом недоступен — вернуть фоллбэк
+    getRandom(category) {
+        if (this.hasApi && this.data && this.data[category]?.length > 0) {
+            const list = this.data[category];
+            return list[Math.floor(Math.random() * list.length)];
+        }
+        return FALLBACKS[category] || null;
+    },
+
+    // Получить список сценариев
+    getScenarios() {
+        if (this.hasApi && this.data?.scenarios?.length > 0) {
+            return this.data.scenarios;
+        }
+        return FALLBACKS.scenarios;
+    },
+
+    // Разрешить __random__ в строке
+    resolve(str, category) {
+        if (!str) return str;
+        if (str.includes('__random__')) {
+            return this.getRandom(category);
+        }
+        return str;
+    }
+};
+
+// ============================================================
+// ПАРСЕР СЦЕНАРИЕВ (JS-версия оригинального Python-парсера)
+// ============================================================
+class ScenarioParser {
+    constructor() {
+        this.commands = [];
+        this.characters = {};
+        this.customCSS = [];
+    }
+
+    parse(code) {
+        this.commands = [];
+        this.characters = {};
+        this.customCSS = [];
+
+        const lines = code.trim().split('\n');
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line || line.startsWith('#')) continue;
+
+            try {
+                if (this._parseLine(line)) continue;
+            } catch(e) {
+                console.warn(`Ошибка парсинга строки ${i+1}: ${line}`, e);
+            }
+        }
+
+        // Собираем список спрайтов для предзагрузки
+        const spriteFiles = new Set();
+        for (const cmd of this.commands) {
+            if (cmd.cmd === 'sprite' && cmd.file && !cmd.file.includes('__random__')) {
+                spriteFiles.add(cmd.file);
+            }
+            if (cmd.cmd === 'show' && cmd.sprite && !cmd.sprite.includes('__random__')) {
+                spriteFiles.add(cmd.sprite);
+            }
+        }
+
+        return {
+            commands: this.commands,
+            characters: this.characters,
+            sprites: Array.from(spriteFiles),
+            custom_css: this.customCSS
+        };
+    }
+
+    _parseLine(line) {
+        let m;
+
+        // Определение персонажа: hero = C("Имя", "#цвет")
+        m = line.match(/^(\w+)\s*=\s*C\(\s*"([^"]*)"\s*,\s*"([^"]*)"\s*\)/);
+        if (m) {
+            this.characters[m[1]] = { name: m[2], color: m[3] };
+            return true;
+        }
+
+        // css()
+        m = line.match(/^css\(\s*"(.+?)"\s*\)/) ||
+            line.match(/^css\(\s*'(.+?)'\s*\)/);
+        if (m) {
+            this.customCSS.push(m[1]);
+            this.commands.push({ cmd: 'css', code: m[1] });
+            return true;
+        }
+
+        // custom_fx()
+        m = line.match(/^custom_fx\(\s*"([^"]+)"\s*,\s*"([^"]+)"(.*)?\)/);
+        if (m) {
+            const rest = m[3] || '';
+            const nums = this._nums(rest);
+            const named = this._named(rest);
+            this.commands.push({
+                cmd: 'custom_fx',
+                target: m[1],
+                animation: m[2],
+                duration: nums[0] ?? 1.0,
+                timing: named.timing ?? 'ease',
+                iterations: named.iterations ?? 1,
+                keep: named.keep ?? false
+            });
+            return true;
+        }
+
+        // clear()
+        m = line.match(/^clear\(\s*([\d.]+)?\s*\)/);
+        if (m) {
+            this.commands.push({ cmd: 'clear', fade: parseFloat(m[1] ?? '0.3') });
+            return true;
+        }
+
+        // bg()
+        m = line.match(/^bg\(\s*"([^"]+)"(?:\s*,\s*fade\s*=\s*([\d.]+))?\s*\)/);
+        if (m) {
+            this.commands.push({
+                cmd: 'bg',
+                file: Resources.resolve(m[1], 'bg'),
+                fade: parseFloat(m[2] ?? '0.8')
+            });
+            return true;
+        }
+
+        // fade_out()
+        m = line.match(/^fade_out\(\s*"?([^",]*)"?\s*(?:,\s*([\d.]+))?\s*\)/);
+        if (m) {
+            this.commands.push({
+                cmd: 'fade_out',
+                color: m[1].trim() || 'black',
+                dur: parseFloat(m[2] ?? '0.6')
+            });
+            return true;
+        }
+
+        // fade_in()
+        m = line.match(/^fade_in\(\s*([\d.]+)?\s*\)/);
+        if (m) {
+            this.commands.push({ cmd: 'fade_in', dur: parseFloat(m[1] ?? '0.6') });
+            return true;
+        }
+
+        // wait()
+        m = line.match(/^wait\(\s*([\d.]+)\s*\)/);
+        if (m) {
+            this.commands.push({ cmd: 'wait', dur: parseFloat(m[1]) });
+            return true;
+        }
+
+        // music()
+        m = line.match(/^music\(([^)]*)\)/);
+        if (m) {
+            const args = m[1].trim();
+            if (args === 'None' || args === '') {
+                this.commands.push({ cmd: 'music', file: null, fade_out: 2 });
+            } else {
+                const strs = this._strs(args);
+                const named = this._named(args);
+                this.commands.push({
+                    cmd: 'music',
+                    file: Resources.resolve(strs[0], 'music'),
+                    fade_in: named.fade_in ?? 0,
+                    fade_out: named.fade_out ?? 0,
+                    start: named.start ?? 0,
+                    volume: named.volume ?? 1.0
+                });
+            }
+            return true;
+        }
+
+        // ambient()
+        m = line.match(/^ambient\(([^)]*)\)/);
+        if (m) {
+            const args = m[1].trim();
+            if (args === 'None' || args === '') {
+                this.commands.push({ cmd: 'ambient', file: null });
+            } else {
+                const strs = this._strs(args);
+                const named = this._named(args);
+                this.commands.push({
+                    cmd: 'ambient',
+                    file: Resources.resolve(strs[0], 'ambient'),
+                    volume: named.volume ?? 1.0
+                });
+            }
+            return true;
+        }
+
+        // sfx()
+        m = line.match(/^sfx\(\s*"([^"]+)"(?:\s*,\s*volume\s*=\s*([\d.]+))?\s*\)/);
+        if (m) {
+            this.commands.push({
+                cmd: 'sfx',
+                file: Resources.resolve(m[1], 'sfx'),
+                volume: parseFloat(m[2] ?? '1.0')
+            });
+            return true;
+        }
+
+        // sprite()
+        m = line.match(/^sprite\(\s*"([^"]+)"\s*,\s*"([^"]+)"(?:\s*,\s*"?([^",)]+)"?)?(.*)?\)/);
+        if (m) {
+            const rest = m[4] || '';
+            const named = this._named(rest);
+            this.commands.push({
+                cmd: 'sprite',
+                id: m[1],
+                file: Resources.resolve(m[2], 'sprites'),
+                pos: m[3] ? m[3].trim() : null,
+                zoom: named.zoom ?? 1.0,
+                flip: named.flip ?? false,
+                transition: named.transition ?? 0
+            });
+            return true;
+        }
+
+        // show()
+        m = line.match(/^show\(\s*"([^"]+)"\s*,\s*"?([^",)]+)"?(.*)?\)/);
+        if (m) {
+            const rest = m[3] || '';
+            const named = this._named(rest);
+            this.commands.push({
+                cmd: 'show',
+                sprite: Resources.resolve(m[1], 'sprites'),
+                pos: m[2].trim(),
+                zoom: named.zoom ?? 1.0,
+                flip: named.flip ?? false,
+                transition: named.transition ?? 0
+            });
+            return true;
+        }
+
+        // hide()
+        m = line.match(/^hide\(\s*"([^"]+)"(?:\s*,\s*fade\s*=\s*([\d.]+))?\s*\)/);
+        if (m) {
+            this.commands.push({
+                cmd: 'hide',
+                target: m[1],
+                fade: parseFloat(m[2] ?? '0.3')
+            });
+            return true;
+        }
+
+        // move()
+        m = line.match(/^move\(\s*"([^"]+)"\s*,\s*"?([^",)]+)"?\s*,\s*([\d.]+)\s*\)/);
+        if (m) {
+            this.commands.push({
+                cmd: 'move',
+                target: m[1],
+                pos: m[2].trim(),
+                dur: parseFloat(m[3])
+            });
+            return true;
+        }
+
+        // fx()
+        m = line.match(/^fx\(\s*"([^"]+)"\s*,\s*"(\w+)"(.*)?\)/);
+        if (m) {
+            const nums = this._nums(m[3] || '');
+            this.commands.push({
+                cmd: 'fx',
+                target: m[1],
+                effect: m[2],
+                param1: nums[0] ?? 0.5,
+                param2: nums[1] ?? null
+            });
+            return true;
+        }
+
+        // daytime()
+        m = line.match(/^daytime\(\s*"(\w+)"\s*\)/);
+        if (m) {
+            this.commands.push({ cmd: 'daytime', time: m[1] });
+            return true;
+        }
+
+        // screen()
+        m = line.match(/^screen\(\s*"(\w+)"(.*)?\)/);
+        if (m) {
+            const rest = m[2] || '';
+            const nums = this._nums(rest);
+            this.commands.push({
+                cmd: 'screen',
+                effect: m[1],
+                dur: nums[0] ?? 0.5
+            });
+            return true;
+        }
+
+        // chromakey()
+        m = line.match(/^chromakey\(([^)]*)\)/);
+        if (m) {
+            const arg = m[1].trim();
+            if (arg === 'None' || arg === '') {
+                this.commands.push({ cmd: 'chromakey', color: null });
+            } else {
+                const strs = this._strs(arg);
+                const named = this._named(arg);
+                this.commands.push({
+                    cmd: 'chromakey',
+                    color: strs[0] ?? null,
+                    tolerance: named.tolerance ?? 30
+                });
+            }
+            return true;
+        }
+
+        // label()
+        m = line.match(/^label\(\s*"(\w+)"\s*\)/);
+        if (m) {
+            this.commands.push({ cmd: 'label', name: m[1] });
+            return true;
+        }
+
+        // jump()
+        m = line.match(/^jump\(\s*"(\w+)"\s*\)/);
+        if (m) {
+            this.commands.push({ cmd: 'jump', target: m[1] });
+            return true;
+        }
+
+        // set()
+        m = line.match(/^set\(\s*"(\w+)"\s*,\s*(.+)\s*\)/);
+        if (m) {
+            this.commands.push({ cmd: 'set', var: m[1], val: this._val(m[2].trim()) });
+            return true;
+        }
+
+        // add()
+        m = line.match(/^add\(\s*"(\w+)"\s*,\s*(-?[\d.]+)\s*\)/);
+        if (m) {
+            this.commands.push({ cmd: 'add', var: m[1], val: parseFloat(m[2]) });
+            return true;
+        }
+
+        // if_()
+        m = line.match(/^if_\(\s*"(\w+)"\s*\):\s*(.+)/);
+        if (m) {
+            const sub = new ScenarioParser();
+            const parsed = sub.parse(m[2].trim());
+            this.commands.push({ cmd: 'if', var: m[1], then: parsed.commands });
+            return true;
+        }
+
+        // if_cmp()
+        m = line.match(/^if_cmp\(\s*"(\w+)"\s*,\s*"([<>=!]+)"\s*,\s*(-?[\d.]+)\s*\):\s*(.+)/);
+        if (m) {
+            const sub = new ScenarioParser();
+            const parsed = sub.parse(m[4].trim());
+            this.commands.push({
+                cmd: 'if_cmp',
+                var: m[1], op: m[2], val: parseFloat(m[3]),
+                then: parsed.commands
+            });
+            return true;
+        }
+
+        // choice()
+        m = line.match(/^choice\((.+)\)/);
+        if (m) {
+            const args = this._strs(m[1]);
+            const options = [];
+            for (let j = 0; j + 1 < args.length; j += 2) {
+                options.push({ text: args[j], target: args[j+1] });
+            }
+            this.commands.push({ cmd: 'choice', options });
+            return true;
+        }
+
+        // Реплика персонажа: hero("Текст")
+        m = line.match(/^(\w+)\(\s*"(.*)"\s*\)/);
+        if (m && this.characters[m[1]]) {
+            const ch = this.characters[m[1]];
+            this.commands.push({ cmd: 'say', name: ch.name, color: ch.color, text: m[2] });
+            return true;
+        }
+
+        return false;
+    }
+
+    // Вспомогательные методы
+    _strs(s) {
+        return Array.from(s.matchAll(/"([^"]*)"/g), m => m[1]);
+    }
+
+    _nums(s) {
+        return Array.from(s.matchAll(/[\d.]+/g), m => parseFloat(m[0]));
+    }
+
+    _named(s) {
+        const result = {};
+        for (const m of s.matchAll(/(\w+)\s*=\s*([^,)]+)/g)) {
+            result[m[1]] = this._val(m[2].trim());
+        }
+        return result;
+    }
+
+    _val(s) {
+        s = s.replace(/^['"]|['"]$/g, '');
+        if (s === 'True') return true;
+        if (s === 'False') return false;
+        if (s === 'None') return null;
+        const n = parseFloat(s);
+        return isNaN(n) ? s : n;
+    }
+}
+
+// ============================================================
+// ДВИЖОК VN
+// ============================================================
+const VN = {
+    commands: [],
+    cmdIndex: 0,
+    variables: {},
+    labels: {},
+    sprites: {},
+    spritesByFile: {},
+
+    imageCache: {},
+
+    currentMusic: null,
+    currentAmbient: null,
+
+    chromakeyColor: null,
+    chromakeyTolerance: 30,
+
+    isTyping: false,
+    typeAnimationId: null,
+    fullText: '',
+    currentTextIndex: 0,
+    waitingForClick: false,
+
+    settings: { volMusic: 80, volAmbient: 70, volSfx: 90, textSpeed: 50 },
+
+    dom: {},
+    isRunning: false,
+
+    customStylesAdded: new Set(),
+
+    async init() {
+        this.dom = {
+            game:               document.getElementById('game'),
+            bgCurrent:          document.getElementById('bg-current'),
+            bgNext:             document.getElementById('bg-next'),
+            spritesLayer:       document.getElementById('sprites-layer'),
+            daytimeOverlay:     document.getElementById('daytime-overlay'),
+            flashOverlay:       document.getElementById('flash-overlay'),
+            fadeOverlay:        document.getElementById('fade-overlay'),
+            textbox:            document.getElementById('textbox'),
+            speaker:            document.getElementById('speaker'),
+            dialogue:           document.getElementById('dialogue'),
+            continueIndicator:  document.getElementById('continue-indicator'),
+            choiceContainer:    document.getElementById('choice-container'),
+            clickArea:          document.getElementById('click-area'),
+            menu:               document.getElementById('menu'),
+            menuBg:             document.getElementById('menu-bg'),
+            optionsPanel:       document.getElementById('options-panel'),
+            scenarioPanel:      document.getElementById('scenario-panel'),
+            scenariosContainer: document.getElementById('scenarios-container'),
+            chromakeyCanvas:    document.getElementById('chromakey-canvas'),
+            loadingOverlay:     document.getElementById('loading-overlay'),
+            loadingText:        document.getElementById('loading-text'),
+            customStyles:       document.getElementById('custom-styles')
+        };
+
+        this.loadSettings();
+        this.setupEventListeners();
+
+        // Инициализируем менеджер ресурсов
+        await Resources.init();
+
+        // Инициализируем меню
+        await this.initMenu();
+    },
+
+    loadSettings() {
+        try {
+            const saved = localStorage.getItem('vn-engine-settings');
+            if (saved) Object.assign(this.settings, JSON.parse(saved));
+        } catch(e) {}
+
+        document.getElementById('opt-music').value   = this.settings.volMusic;
+        document.getElementById('opt-ambient').value = this.settings.volAmbient;
+        document.getElementById('opt-sfx').value     = this.settings.volSfx;
+        document.getElementById('opt-speed').value   = this.settings.textSpeed;
+        this.updateOptionLabels();
+    },
+
+    saveSettings() {
+        try { localStorage.setItem('vn-engine-settings', JSON.stringify(this.settings)); } catch(e) {}
+    },
+
+    updateOptionLabels() {
+        document.getElementById('opt-music-val').textContent   = this.settings.volMusic + '%';
+        document.getElementById('opt-ambient-val').textContent = this.settings.volAmbient + '%';
+        document.getElementById('opt-sfx-val').textContent     = this.settings.volSfx + '%';
+        document.getElementById('opt-speed-val').textContent   = this.settings.textSpeed + '%';
+
+        if (this.currentMusic)  this.currentMusic.volume  = this.settings.volMusic / 100;
+        if (this.currentAmbient) this.currentAmbient.volume = this.settings.volAmbient / 100;
+    },
+
+    setupEventListeners() {
+        const optMap = {
+            'opt-music':   'volMusic',
+            'opt-ambient': 'volAmbient',
+            'opt-sfx':     'volSfx',
+            'opt-speed':   'textSpeed'
+        };
+        Object.entries(optMap).forEach(([id, key]) => {
+            document.getElementById(id)?.addEventListener('input', e => {
+                this.settings[key] = parseInt(e.target.value);
+                this.updateOptionLabels();
+                this.saveSettings();
+            });
+        });
+
+        this.dom.clickArea.addEventListener('click', e => { e.preventDefault(); this.handleAdvance(); });
+        this.dom.textbox.addEventListener('click',   e => { e.preventDefault(); this.handleAdvance(); });
+
+        document.addEventListener('keydown', e => {
+            if ((e.code === 'Space' || e.code === 'Enter') && this.isRunning) {
+                e.preventDefault();
+                this.handleAdvance();
+            }
+        });
+    },
+
+    handleAdvance() {
+        if (!this.isRunning) return;
+        if (this.isTyping) {
+            this.finishTyping();
+        } else if (this.waitingForClick) {
+            this.waitingForClick = false;
+            this.dom.continueIndicator.classList.remove('visible');
+            this.executeNext();
+        }
+    },
+
+    async initMenu() {
+        // Фон меню
+        const menuBg = Resources.hasApi
+            ? (Resources.data?.bg?.find(b => b.includes('bus_stop')) || Resources.getRandom('bg'))
+            : FALLBACKS.menuBg;
+
+        if (menuBg) {
+            this.dom.menuBg.style.backgroundImage = `url('bg/${menuBg}')`;
+        }
+
+        // Музыка меню
+        if (!this.isRunning && !this.currentMusic) {
+            const menuMusic = Resources.hasApi
+                ? (Resources.data?.music?.find(m => m.includes('blow_with_the_fires')) || Resources.getRandom('music'))
+                : FALLBACKS.menuMusic;
+
+            if (menuMusic) {
+                this.currentMusic = new Audio('audio/music/' + menuMusic);
+                this.currentMusic.loop = true;
+                this.currentMusic.volume = this.settings.volMusic / 100;
+                // Автовоспроизведение только после взаимодействия пользователя
+                document.body.addEventListener('click', () => {
+                    if (this.currentMusic?.paused && !this.isRunning) {
+                        this.currentMusic.play().catch(() => {});
+                    }
+                }, { once: true });
+            }
+        }
+    },
+
+    showOptions()  { this.dom.optionsPanel.classList.add('active'); },
+    hideOptions()  { this.dom.optionsPanel.classList.remove('active'); },
+
+    async showScenarios() {
+        const scenarios = Resources.getScenarios();
+        const c = this.dom.scenariosContainer;
+
+        if (scenarios.length === 0) {
+            c.innerHTML = '<p style="color:#666;text-align:center;padding:1em;">Сценарии не найдены</p>';
+        } else {
+            c.innerHTML = scenarios
+                .map(s => `<button class="scenario-btn" onclick="VN.startScenario('${s}')">${s.replace(/\.py$/i, '')}</button>`)
+                .join('');
+        }
+        this.dom.scenarioPanel.classList.add('active');
+    },
+
+    hideScenarios() { this.dom.scenarioPanel.classList.remove('active'); },
+
+    showLoading(text = 'Загрузка...') {
+        this.dom.loadingText.textContent = text;
+        this.dom.loadingOverlay.classList.add('visible');
+    },
+
+    hideLoading() {
+        this.dom.loadingOverlay.classList.remove('visible');
+    },
+
+    async preloadImages(urls) {
+        const toLoad = urls.filter(url => !this.imageCache[url]);
+        if (toLoad.length === 0) return;
+
+        let loaded = 0;
+        const total = toLoad.length;
+
+        await Promise.all(toLoad.map(url => new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => {
+                this.imageCache[url] = img;
+                loaded++;
+                this.dom.loadingText.textContent = `Загрузка... ${Math.round(loaded / total * 100)}%`;
+                resolve();
+            };
+            img.onerror = () => { loaded++; resolve(); };
+            img.src = url;
+        })));
+    },
+
+    addCustomCSS(cssCode) {
+        const hash = cssCode.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
+        if (this.customStylesAdded.has(hash)) return;
+        this.customStylesAdded.add(hash);
+        this.dom.customStyles.textContent += '\n' + cssCode;
+    },
+
+    resetCustomCSS() {
+        this.dom.customStyles.textContent = '';
+        this.customStylesAdded.clear();
+    },
+
+    // Запуск тестового сценария (встроен в HTML)
+    async startTest() {
+        this.dom.menu.classList.add('hidden');
+        this.showLoading();
+        try {
+            const parser = new ScenarioParser();
+            const data = parser.parse(TEST_SCENARIO);
+            await this.runScenario(data);
+        } catch(e) {
+            console.error(e);
+            this.hideLoading();
+            this.dom.menu.classList.remove('hidden');
+        }
+    },
+
+    // Загрузка сценария из файла
+    async startScenario(name) {
+        this.hideScenarios();
+        this.dom.menu.classList.add('hidden');
+        this.showLoading();
+        try {
+            const response = await fetch(`scenarios/${name}`);
+            if (!response.ok) throw new Error(`Не удалось загрузить сценарий: ${name}`);
+            const code = await response.text();
+            const parser = new ScenarioParser();
+            const data = parser.parse(code);
+            await this.runScenario(data);
+        } catch(e) {
+            console.error(e);
+            this.hideLoading();
+            this.dom.menu.classList.remove('hidden');
+        }
+    },
+
+    async runScenario(data) {
+        this.isRunning = true;
+        this.commands = data.commands || [];
+        this.cmdIndex = 0;
+        this.variables = {};
+        this.sprites = {};
+        this.spritesByFile = {};
+        this.isTyping = false;
+        this.waitingForClick = false;
+
+        this.resetCustomCSS();
+        if (data.custom_css) data.custom_css.forEach(css => this.addCustomCSS(css));
+
+        // Предзагрузка спрайтов (только конкретных файлов, без __random__)
+        if (data.sprites?.length > 0) {
+            await this.preloadImages(data.sprites.map(s => 'sprites/' + s));
+        }
+
+        this.hideLoading();
+
+        // Строим таблицу меток
+        this.labels = {};
+        this.commands.forEach((cmd, i) => { if (cmd.cmd === 'label') this.labels[cmd.name] = i; });
+
+        // Сброс UI
+        this.dom.textbox.classList.add('visible');
+        this.dom.clickArea.classList.add('active');
+        this.dom.continueIndicator.classList.remove('visible');
+        this.dom.spritesLayer.innerHTML = '';
+        this.dom.bgCurrent.style.backgroundImage = '';
+        this.dom.bgNext.style.backgroundImage = '';
+        this.dom.bgNext.style.opacity = '0';
+        this.dom.daytimeOverlay.style.background = '';
+        this.dom.fadeOverlay.style.transition = 'none';
+        this.dom.fadeOverlay.style.opacity = '0';
+        this.dom.fadeOverlay.style.background = '#000';
+        this.dom.flashOverlay.style.opacity = '0';
+        this.dom.speaker.textContent = '';
+        this.dom.dialogue.textContent = '';
+
+        if (this.currentMusic)  { this.currentMusic.pause();  this.currentMusic = null; }
+        if (this.currentAmbient){ this.currentAmbient.pause(); this.currentAmbient = null; }
+
+        void this.dom.fadeOverlay.offsetHeight;
+
+        this.executeNext();
+    },
+
+    executeNext() {
+        if (this.cmdIndex >= this.commands.length) { this.endScenario(); return; }
+        this.executeCommand(this.commands[this.cmdIndex++]);
+    },
+
+    executeCommand(cmd) {
+        if (!cmd?.cmd) { this.executeNext(); return; }
+        try {
+            const h = {
+                bg:         () => this.cmdBg(cmd),
+                fade_out:   () => this.cmdFadeOut(cmd),
+                fade_in:    () => this.cmdFadeIn(cmd),
+                wait:       () => setTimeout(() => this.executeNext(), (cmd.dur || 0.5) * 1000),
+                music:      () => this.cmdMusic(cmd),
+                ambient:    () => this.cmdAmbient(cmd),
+                sfx:        () => this.cmdSfx(cmd),
+                sprite:     () => this.cmdSprite(cmd),
+                show:       () => this.cmdShow(cmd),
+                hide:       () => this.cmdHide(cmd),
+                clear:      () => this.cmdClear(cmd),
+                move:       () => this.cmdMove(cmd),
+                fx:         () => this.cmdFx(cmd),
+                custom_fx:  () => this.cmdCustomFx(cmd),
+                css:        () => { this.addCustomCSS(cmd.code); this.executeNext(); },
+                daytime:    () => this.cmdDaytime(cmd),
+                screen:     () => this.cmdScreen(cmd),
+                chromakey:  () => { this.chromakeyColor = cmd.color; this.chromakeyTolerance = cmd.tolerance || 30; this.executeNext(); },
+                say:        () => this.cmdSay(cmd),
+                choice:     () => this.cmdChoice(cmd),
+                label:      () => this.executeNext(),
+                jump:       () => { if (this.labels[cmd.target] !== undefined) this.cmdIndex = this.labels[cmd.target]; this.executeNext(); },
+                set:        () => { this.variables[cmd.var] = cmd.val; this.executeNext(); },
+                add:        () => { this.variables[cmd.var] = (this.variables[cmd.var] || 0) + cmd.val; this.executeNext(); },
+                if:         () => this.cmdIf(cmd),
+                if_cmp:     () => this.cmdIfCmp(cmd)
+            };
+            (h[cmd.cmd] || (() => this.executeNext()))();
+        } catch(e) { console.error('Ошибка команды:', cmd, e); this.executeNext(); }
+    },
+
+    cmdBg(cmd) {
+        if (!cmd.file) { this.executeNext(); return; }
+        const url = 'bg/' + cmd.file;
+        const dur = cmd.fade || 0.8;
+        this.dom.bgNext.style.backgroundImage = `url('${url}')`;
+        this.dom.bgNext.style.transition = `opacity ${dur}s ease-in-out`;
+        void this.dom.bgNext.offsetHeight;
+        this.dom.bgNext.style.opacity = '1';
+        setTimeout(() => {
+            this.dom.bgCurrent.style.backgroundImage = `url('${url}')`;
+            this.dom.bgNext.style.transition = 'none';
+            this.dom.bgNext.style.opacity = '0';
+            this.executeNext();
+        }, dur * 1000);
+    },
+
+    cmdFadeOut(cmd) {
+        const dur = cmd.dur || 0.6;
+        this.dom.fadeOverlay.style.background = cmd.color || 'black';
+        this.dom.fadeOverlay.style.transition = `opacity ${dur}s ease-in-out`;
+        void this.dom.fadeOverlay.offsetHeight;
+        this.dom.fadeOverlay.style.opacity = '1';
+        setTimeout(() => this.executeNext(), dur * 1000);
+    },
+
+    cmdFadeIn(cmd) {
+        const dur = cmd.dur || 0.6;
+        this.dom.fadeOverlay.style.transition = `opacity ${dur}s ease-in-out`;
+        void this.dom.fadeOverlay.offsetHeight;
+        this.dom.fadeOverlay.style.opacity = '0';
+        setTimeout(() => this.executeNext(), dur * 1000);
+    },
+
+    cmdMusic(cmd) {
+        if (this.currentMusic) {
+            (cmd.fade_out > 0)
+                ? this.fadeOutAudio(this.currentMusic, cmd.fade_out)
+                : this.currentMusic.pause();
+            this.currentMusic = null;
+        }
+        if (!cmd.file) { this.executeNext(); return; }
+
+        const audio = new Audio('audio/music/' + cmd.file);
+        audio.loop = true;
+        audio.volume = 0;
+        if (cmd.start) audio.currentTime = cmd.start;
+        this.currentMusic = audio;
+
+        audio.play().then(() => {
+            const target = (cmd.volume || 1) * this.settings.volMusic / 100;
+            cmd.fade_in > 0
+                ? this.fadeInAudio(audio, cmd.fade_in, target)
+                : (audio.volume = target);
+        }).catch(e => console.warn('Музыка:', e));
+        this.executeNext();
+    },
+
+    cmdAmbient(cmd) {
+        if (this.currentAmbient) { this.currentAmbient.pause(); this.currentAmbient = null; }
+        if (!cmd.file) { this.executeNext(); return; }
+        const audio = new Audio('audio/ambient/' + cmd.file);
+        audio.loop = true;
+        audio.volume = (cmd.volume || 1) * this.settings.volAmbient / 100;
+        this.currentAmbient = audio;
+        audio.play().catch(e => console.warn('Эмбиент:', e));
+        this.executeNext();
+    },
+
+    cmdSfx(cmd) {
+        if (!cmd.file) { this.executeNext(); return; }
+        const audio = new Audio('audio/sfx/' + cmd.file);
+        audio.volume = (cmd.volume || 1) * this.settings.volSfx / 100;
+        audio.play().catch(e => console.warn('SFX:', e));
+        this.executeNext();
+    },
+
+    cmdSprite(cmd) {
+        if (!cmd.file) { this.executeNext(); return; }
+        let el = this.sprites[cmd.id];
+        const isNew = !el;
+
+        if (isNew) {
+            el = document.createElement('div');
+            el.className = 'sprite';
+            el.dataset.id = cmd.id;
+            el.appendChild(Object.assign(document.createElement('div'), { className: 'sprite-inner' }));
+            this.dom.spritesLayer.appendChild(el);
+            this.sprites[cmd.id] = el;
+        }
+
+        if (cmd.pos != null) el.style.left = `${this.parsePosition(cmd.pos)}%`;
+
+        const inner = el.querySelector('.sprite-inner');
+        const zoom = cmd.zoom || 1.0;
+        inner.style.setProperty('--sprite-scale', zoom);
+        inner.style.transform = `scale(${zoom})`;
+        el.style.transform = `translateX(-50%)${cmd.flip ? ' scaleX(-1)' : ''}`;
+
+        this.setSpriteImage(el, cmd.file, cmd.transition || 0, () => {
+            if (isNew) requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
+        });
+
+        this.executeNext();
+    },
+
+    cmdShow(cmd) {
+        if (!cmd.sprite) { this.executeNext(); return; }
+        let el = this.spritesByFile[cmd.sprite];
+        const isNew = !el;
+
+        if (isNew) {
+            el = document.createElement('div');
+            el.className = 'sprite';
+            el.appendChild(Object.assign(document.createElement('div'), { className: 'sprite-inner' }));
+            this.dom.spritesLayer.appendChild(el);
+            this.spritesByFile[cmd.sprite] = el;
+        }
+
+        el.style.left = `${this.parsePosition(cmd.pos)}%`;
+        const inner = el.querySelector('.sprite-inner');
+        const zoom = cmd.zoom || 1.0;
+        inner.style.setProperty('--sprite-scale', zoom);
+        inner.style.transform = `scale(${zoom})`;
+        el.style.transform = `translateX(-50%)${cmd.flip ? ' scaleX(-1)' : ''}`;
+
+        this.setSpriteImage(el, cmd.sprite, cmd.transition || 0, () => {
+            if (isNew) requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
+        });
+
+        this.executeNext();
+    },
+
+    parsePosition(pos) {
+        if (pos === 'left')   return 25;
+        if (pos === 'center') return 50;
+        if (pos === 'right')  return 75;
+        return parseFloat(pos) || 50;
+    },
+
+    setSpriteImage(container, filename, transition, onComplete) {
+        const inner = container.querySelector('.sprite-inner');
+        const url = 'sprites/' + filename;
+
+        let img;
+        if (this.imageCache[url]) {
+            img = this.imageCache[url].cloneNode();
+        } else {
+            img = new Image();
+            img.src = url;
+        }
+
+        const apply = (finalImg) => {
+            if (this.chromakeyColor) {
+                this.applyChromakeyToImage(finalImg, processed => {
+                    this.replaceImage(inner, processed, transition);
+                    onComplete?.();
+                });
+            } else {
+                this.replaceImage(inner, finalImg, transition);
+                onComplete?.();
+            }
+        };
+
+        if (img.complete && img.naturalHeight !== 0) {
+            apply(img);
+        } else {
+            img.onload  = () => apply(img);
+            img.onerror = () => onComplete?.();
+        }
+    },
+
+    applyChromakeyToImage(img, callback) {
+        const canvas = this.dom.chromakeyCanvas;
+        const ctx = canvas.getContext('2d');
+        canvas.width  = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        this.applyChromakey(data);
+        ctx.putImageData(data, 0, 0);
+        const processed = new Image();
+        processed.onload = () => callback(processed);
+        processed.src = canvas.toDataURL('image/png');
+    },
+
+    replaceImage(container, newImg, transition = 0) {
+        const existing = container.querySelector('img');
+        newImg.style.cssText = 'display:block;margin:0 auto;';
+
+        if (existing && transition > 0) {
+            Object.assign(newImg.style, {
+                position: 'absolute', top: '0', left: '50%',
+                transform: 'translateX(-50%)', opacity: '0',
+                transition: `opacity ${transition}s ease`
+            });
+            container.style.position = 'relative';
+            container.appendChild(newImg);
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                newImg.style.opacity = '1';
+                existing.style.transition = `opacity ${transition}s ease`;
+                existing.style.opacity = '0';
+            }));
+            setTimeout(() => {
+                existing.remove();
+                newImg.style.cssText = 'display:block;margin:0 auto;';
+            }, transition * 1000 + 50);
+        } else if (existing) {
+            existing.replaceWith(newImg);
+        } else {
+            container.appendChild(newImg);
+        }
+    },
+
+    applyChromakey(imageData) {
+        const d = imageData.data;
+        const r = parseInt(this.chromakeyColor.slice(1,3), 16);
+        const g = parseInt(this.chromakeyColor.slice(3,5), 16);
+        const b = parseInt(this.chromakeyColor.slice(5,7), 16);
+        const tol = this.chromakeyTolerance;
+        for (let i = 0; i < d.length; i += 4) {
+            const dist = Math.sqrt((d[i]-r)**2 + (d[i+1]-g)**2 + (d[i+2]-b)**2);
+            if (dist < tol)         d[i+3] = 0;
+            else if (dist < tol*2)  d[i+3] = Math.floor(255 * (dist - tol) / tol);
+        }
+    },
+
+    cmdHide(cmd) {
+        const fade = (cmd.fade || 0.3) * 1000;
+        if (cmd.target === '__all__' || cmd.target === 'all') {
+            [...Object.values(this.sprites), ...Object.values(this.spritesByFile)].forEach(el => {
+                el.classList.add('hiding');
+                el.classList.remove('visible');
+            });
+            setTimeout(() => {
+                this.dom.spritesLayer.innerHTML = '';
+                this.sprites = {};
+                this.spritesByFile = {};
+            }, fade);
+        } else {
+            const el = this.sprites[cmd.target] || this.spritesByFile[cmd.target];
+            if (el) {
+                el.classList.add('hiding');
+                el.classList.remove('visible');
+                setTimeout(() => {
+                    el.remove();
+                    delete this.sprites[cmd.target];
+                    delete this.spritesByFile[cmd.target];
+                }, fade);
+            }
+        }
+        this.executeNext();
+    },
+
+    cmdClear(cmd) {
+        const fade = (cmd.fade || 0.3) * 1000;
+        [...Object.values(this.sprites), ...Object.values(this.spritesByFile)].forEach(el => {
+            el.classList.add('hiding');
+            el.classList.remove('visible');
+        });
+        setTimeout(() => {
+            this.dom.spritesLayer.innerHTML = '';
+            this.sprites = {};
+            this.spritesByFile = {};
+            this.executeNext();
+        }, fade);
+    },
+
+    cmdMove(cmd) {
+        const el = this.sprites[cmd.target] || this.spritesByFile[cmd.target];
+        if (!el) { this.executeNext(); return; }
+        const dur = cmd.dur || 0.5;
+        el.style.transition = `left ${dur}s cubic-bezier(0.4, 0, 0.2, 1)`;
+        requestAnimationFrame(() => { el.style.left = `${this.parsePosition(cmd.pos)}%`; });
+        setTimeout(() => this.executeNext(), dur * 1000);
+    },
+
+    cmdFx(cmd) {
+        const el = this.sprites[cmd.target] || this.spritesByFile[cmd.target];
+        const inner = el?.querySelector('.sprite-inner');
+        if (!inner) { this.executeNext(); return; }
+
+        const fx  = cmd.effect;
+        const dur = cmd.param1 || 0.5;
+
+        inner.style.animation = 'none';
+        void inner.offsetHeight;
+
+        const effects = {
+            shake:   () => { inner.style.animation = `sprite-shake ${dur}s ease`; setTimeout(() => { inner.style.animation = ''; }, dur * 1000); },
+            pulse:   () => { inner.style.animation = `sprite-pulse ${dur}s ease infinite`; setTimeout(() => { inner.style.animation = ''; }, dur * 1000); },
+            bounce:  () => { inner.style.animation = `sprite-bounce ${dur}s cubic-bezier(0.34, 1.56, 0.64, 1)`; setTimeout(() => { inner.style.animation = ''; }, dur * 1000); },
+            glow:    () => { inner.style.animation = `sprite-glow ${dur}s ease infinite`; setTimeout(() => { inner.style.animation = ''; }, dur * 1000); },
+            tremble: () => { inner.style.animation = `sprite-tremble 0.06s linear infinite`; setTimeout(() => { inner.style.animation = ''; }, dur * 1000); },
+            float:   () => { inner.style.animation = `sprite-float ${dur}s ease-in-out infinite`; },
+            sway:    () => { inner.style.animation = `sprite-sway ${dur}s ease-in-out infinite`; setTimeout(() => { inner.style.animation = ''; }, dur * 1000); },
+            hop:     () => { inner.style.animation = `sprite-hop 0.3s ease`; setTimeout(() => { inner.style.animation = ''; }, 350); },
+            nod:     () => { inner.style.animation = `sprite-nod 0.4s ease`; setTimeout(() => { inner.style.animation = ''; }, 450); },
+            zoom:    () => {
+                const scale = dur;
+                const time  = cmd.param2 || 0.3;
+                inner.style.setProperty('--sprite-scale', scale);
+                inner.style.transition = `transform ${time}s cubic-bezier(0.4, 0, 0.2, 1)`;
+                requestAnimationFrame(() => { inner.style.transform = `scale(${scale})`; });
+            },
+            blur:    () => {
+                inner.style.filter = `blur(${dur}px)`;
+                inner.style.transition = 'filter 0.3s ease';
+                if (cmd.param2) setTimeout(() => { inner.style.filter = ''; }, cmd.param2 * 1000);
+            },
+            gray:    () => { inner.style.filter = 'grayscale(100%)'; inner.style.transition = 'filter 0.3s ease'; setTimeout(() => { inner.style.filter = ''; }, dur * 1000); },
+            bright:  () => {
+                inner.style.filter = `brightness(${dur})`;
+                inner.style.transition = 'filter 0.3s ease';
+                if (cmd.param2) setTimeout(() => { inner.style.filter = ''; }, cmd.param2 * 1000);
+            },
+            dim:     () => { inner.style.filter = 'brightness(0.6)'; inner.style.transition = 'filter 0.3s ease'; setTimeout(() => { inner.style.filter = ''; }, dur * 1000); },
+            reset:   () => { inner.style.animation = ''; inner.style.filter = ''; inner.style.transform = `scale(${inner.style.getPropertyValue('--sprite-scale') || 1})`; }
+        };
+
+        (effects[fx] || (() => {}))();
+        this.executeNext();
+    },
+
+    cmdCustomFx(cmd) {
+        const el = this.sprites[cmd.target] || this.spritesByFile[cmd.target];
+        const inner = el?.querySelector('.sprite-inner');
+        if (!inner) { this.executeNext(); return; }
+
+        inner.style.animation = 'none';
+        void inner.offsetHeight;
+
+        const iterStr = cmd.iterations === 'infinite' ? 'infinite' : cmd.iterations;
+        inner.style.animation = `${cmd.animation} ${cmd.duration}s ${cmd.timing} ${iterStr}`;
+
+        if (!cmd.keep && cmd.iterations !== 'infinite') {
+            setTimeout(() => { inner.style.animation = ''; }, cmd.duration * cmd.iterations * 1000 + 50);
+        }
+        this.executeNext();
+    },
+
+    cmdDaytime(cmd) {
+        const colors = {
+            day:     'transparent',
+            sunset:  'rgba(255,90,30,0.22)',
+            night:   'rgba(15,15,50,0.45)',
+            dawn:    'rgba(255,140,170,0.18)',
+            evening: 'rgba(60,40,80,0.28)'
+        };
+        this.dom.daytimeOverlay.style.background = colors[cmd.time] || 'transparent';
+        this.executeNext();
+    },
+
+    cmdScreen(cmd) {
+        const dur = cmd.dur || 0.5;
+        if (cmd.effect === 'shake') {
+            this.dom.game.style.animation = 'none';
+            void this.dom.game.offsetHeight;
+            this.dom.game.style.animation = `screen-shake ${dur}s ease-out`;
+            setTimeout(() => { this.dom.game.style.animation = ''; this.executeNext(); }, dur * 1000);
+        } else if (cmd.effect === 'flash') {
+            this.dom.flashOverlay.style.transition = 'none';
+            this.dom.flashOverlay.style.opacity = '1';
+            void this.dom.flashOverlay.offsetHeight;
+            this.dom.flashOverlay.style.transition = `opacity ${dur}s ease-out`;
+            this.dom.flashOverlay.style.opacity = '0';
+            setTimeout(() => this.executeNext(), dur * 1000);
+        } else {
+            this.executeNext();
+        }
+    },
+
+    cmdSay(cmd) {
+        this.dom.speaker.textContent = cmd.name || '';
+        this.dom.speaker.style.color = cmd.color || '#fff';
+        this.fullText = cmd.text || '';
+        this.currentTextIndex = 0;
+        this.waitingForClick = false;
+        this.dom.dialogue.textContent = '';
+        this.dom.continueIndicator.classList.remove('visible');
+
+        if (this.settings.textSpeed >= 100) {
+            this.dom.dialogue.textContent = this.fullText;
+            this.finishText();
+        } else {
+            this.isTyping = true;
+            this.typeText();
+        }
+    },
+
+    typeText() {
+        if (!this.isTyping) return;
+        if (this.currentTextIndex < this.fullText.length) {
+            this.dom.dialogue.textContent += this.fullText[this.currentTextIndex++];
+            this.typeAnimationId = setTimeout(() => this.typeText(), Math.max(10, 60 - this.settings.textSpeed * 0.55));
+        } else {
+            this.isTyping = false;
+            this.finishText();
+        }
+    },
+
+    finishTyping() {
+        if (this.typeAnimationId) clearTimeout(this.typeAnimationId);
+        this.isTyping = false;
+        this.dom.dialogue.textContent = this.fullText;
+        this.finishText();
+    },
+
+    finishText() {
+        this.waitingForClick = true;
+        this.dom.continueIndicator.classList.add('visible');
+    },
+
+    cmdChoice(cmd) {
+        const c = this.dom.choiceContainer;
+        c.innerHTML = '';
+        this.dom.continueIndicator.classList.remove('visible');
+
+        cmd.options.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.textContent = opt.text;
+            btn.style.opacity = '0';
+            btn.style.transform = 'translateY(10px)';
+            btn.onclick = () => {
+                c.classList.remove('visible');
+                if (this.labels[opt.target] !== undefined) this.cmdIndex = this.labels[opt.target];
+                this.executeNext();
+            };
+            c.appendChild(btn);
+            setTimeout(() => {
+                btn.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                btn.style.opacity = '1';
+                btn.style.transform = 'translateY(0)';
+            }, i * 80);
+        });
+        c.classList.add('visible');
+    },
+
+    cmdIf(cmd) {
+        if (this.variables[cmd.var] && cmd.then?.length) {
+            cmd.then.forEach(c => this.executeCommand(c));
+        }
+        this.executeNext();
+    },
+
+    cmdIfCmp(cmd) {
+        const v = this.variables[cmd.var] || 0;
+        const ops = {
+            '>=': v >= cmd.val, '<=': v <= cmd.val,
+            '>':  v >  cmd.val, '<':  v <  cmd.val,
+            '==': v === cmd.val, '!=': v !== cmd.val
+        };
+        if (ops[cmd.op] && cmd.then?.length) {
+            cmd.then.forEach(c => this.executeCommand(c));
+        }
+        this.executeNext();
+    },
+
+    fadeInAudio(audio, dur, target) {
+        let vol = 0;
+        const step = target / 30;
+        const interval = setInterval(() => {
+            vol = Math.min(vol + step, target);
+            audio.volume = vol;
+            if (vol >= target) clearInterval(interval);
+        }, dur * 1000 / 30);
+    },
+
+    fadeOutAudio(audio, dur) {
+        const startVol = audio.volume;
+        const step = startVol / 30;
+        const interval = setInterval(() => {
+            if (audio.volume > step) {
+                audio.volume -= step;
+            } else {
+                audio.volume = 0;
+                audio.pause();
+                clearInterval(interval);
+            }
+        }, dur * 1000 / 30);
+    },
+
+    endScenario() {
+        this.isRunning = false;
+
+        this.dom.fadeOverlay.style.transition = 'opacity 0.8s ease';
+        void this.dom.fadeOverlay.offsetHeight;
+        this.dom.fadeOverlay.style.opacity = '0';
+        this.dom.flashOverlay.style.opacity = '0';
+        this.dom.daytimeOverlay.style.background = '';
+
+        this.dom.spritesLayer.querySelectorAll('.sprite').forEach(el => {
+            el.classList.add('hiding');
+            el.classList.remove('visible');
+        });
+        setTimeout(() => {
+            this.dom.spritesLayer.innerHTML = '';
+            this.sprites = {};
+            this.spritesByFile = {};
+        }, 400);
+
+        this.dom.textbox.classList.remove('visible');
+        this.dom.clickArea.classList.remove('active');
+        this.dom.choiceContainer.classList.remove('visible');
+        this.dom.continueIndicator.classList.remove('visible');
+
+        if (this.currentMusic) {
+            this.fadeOutAudio(this.currentMusic, 1);
+            const m = this.currentMusic;
+            setTimeout(() => { m.pause(); if (this.currentMusic === m) this.currentMusic = null; }, 1100);
+        }
+        if (this.currentAmbient) { this.currentAmbient.pause(); this.currentAmbient = null; }
+
+        setTimeout(() => {
+            this.dom.fadeOverlay.style.opacity = '0';
+            this.dom.menu.classList.remove('hidden');
+            this.initMenu();
+        }, 600);
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => VN.init());
+</script>
+</body>
+</html>
