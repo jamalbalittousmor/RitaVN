@@ -468,6 +468,119 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
     font-weight: 500;
 }
 
+/* ============================================================
+   PAUSE MENU — меню паузы (Esc во время сценария)
+   z-index: 400 — выше всего остального
+   ============================================================ */
+#pause-menu {
+    position: absolute;
+    inset: 0;
+    z-index: 400;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal) var(--ease-out);
+}
+
+#pause-menu.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#pause-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(8px);
+}
+
+#pause-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1em;
+    background: rgba(10, 10, 25, 0.92);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 18px;
+    padding: 2.5em 3.5em;
+    box-shadow:
+        0 8px 50px rgba(0,0,0,0.7),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+    min-width: 300px;
+}
+
+#pause-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.5em, 4vw, 2em);
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.6em;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 15px rgba(0,0,0,0.8);
+}
+
+.pause-btn {
+    width: 100%;
+    padding: 0.95em 2em;
+    font-family: 'Raleway', sans-serif;
+    font-size: clamp(1em, 2.2vw, 1.15em);
+    font-weight: 600;
+    background: rgba(30, 30, 55, 0.9);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: #fff;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all var(--transition-fast) var(--ease-smooth);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 3px 15px rgba(0,0,0,0.3);
+    text-align: center;
+}
+
+.pause-btn:hover {
+    background: rgba(55, 55, 95, 0.95);
+    border-color: rgba(255,255,255,0.32);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(0,0,0,0.4);
+}
+
+.pause-btn:active { transform: translateY(0) scale(0.98); }
+
+.pause-btn.danger {
+    background: rgba(55, 20, 25, 0.88);
+    border-color: rgba(255,100,110,0.2);
+    color: #ffbbbb;
+}
+
+.pause-btn.danger:hover {
+    background: rgba(85, 35, 40, 0.95);
+    border-color: rgba(255,120,130,0.4);
+}
+
+/* Панель настроек внутри паузы — использует тот же .panel,
+   но вложена в pause-menu, поэтому перекрывает его */
+#pause-options-panel {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 8, 18, 0.97);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 410;
+    padding: 2em;
+    backdrop-filter: blur(15px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal) var(--ease-out);
+}
+
+#pause-options-panel.active { opacity: 1; pointer-events: auto; }
+
 #custom-styles { display: none; }
 
 @keyframes sprite-shake {
@@ -560,6 +673,8 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
     <div id="loading-overlay">
         <div id="loading-text">Загрузка...</div>
     </div>
+
+    <!-- Главное меню -->
     <div id="menu">
         <div id="menu-bg"></div>
         <div id="menu-overlay"></div>
@@ -570,6 +685,8 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
             <button class="menu-btn" onclick="VN.showOptions()">Опции</button>
         </div>
     </div>
+
+    <!-- Настройки из главного меню -->
     <div id="options-panel" class="panel">
         <h2 class="panel-title">Настройки</h2>
         <div class="option-row">
@@ -594,10 +711,49 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
         </div>
         <button class="back-btn" onclick="VN.hideOptions()">Назад</button>
     </div>
+
+    <!-- Выбор сценария -->
     <div id="scenario-panel" class="panel">
         <h2 class="panel-title">Выберите сценарий</h2>
         <div id="scenarios-container"></div>
         <button class="back-btn" onclick="VN.hideScenarios()">Назад</button>
+    </div>
+
+    <!-- PAUSE MENU — поверх всего во время сценария -->
+    <div id="pause-menu">
+        <div id="pause-backdrop"></div>
+        <div id="pause-content">
+            <div id="pause-title">Пауза</div>
+            <button class="pause-btn" onclick="VN.resumeGame()">Продолжить</button>
+            <button class="pause-btn" onclick="VN.pauseShowOptions()">Настройки</button>
+            <button class="pause-btn danger" onclick="VN.returnToMainMenu()">В главное меню</button>
+        </div>
+    </div>
+
+    <!-- Настройки внутри паузы (отдельная копия слайдеров) -->
+    <div id="pause-options-panel">
+        <h2 class="panel-title">Настройки</h2>
+        <div class="option-row">
+            <span class="option-label">Музыка</span>
+            <input type="range" min="0" max="100" value="40" id="popt-music" class="option-input">
+            <span class="option-value" id="popt-music-val">40%</span>
+        </div>
+        <div class="option-row">
+            <span class="option-label">Эмбиент</span>
+            <input type="range" min="0" max="100" value="40" id="popt-ambient" class="option-input">
+            <span class="option-value" id="popt-ambient-val">40%</span>
+        </div>
+        <div class="option-row">
+            <span class="option-label">Звуки</span>
+            <input type="range" min="0" max="100" value="40" id="popt-sfx" class="option-input">
+            <span class="option-value" id="popt-sfx-val">40%</span>
+        </div>
+        <div class="option-row">
+            <span class="option-label">Скорость текста</span>
+            <input type="range" min="0" max="100" value="90" id="popt-speed" class="option-input">
+            <span class="option-value" id="popt-speed-val">90%</span>
+        </div>
+        <button class="back-btn" onclick="VN.pauseHideOptions()">Назад</button>
     </div>
 </div>
 <canvas id="chromakey-canvas"></canvas>
@@ -606,10 +762,6 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
 <script>
 'use strict';
 
-// ============================================================
-// КОНФИГ — фоллбэки для GitHub Pages
-// (когда нет локального API и рандом недоступен)
-// ============================================================
 const FALLBACKS = {
     bg:        'ext_beach_sunset.jpg',
     sprites:   'рита_весёлая_приветствует.png',
@@ -619,7 +771,6 @@ const FALLBACKS = {
     scenarios: ['rita.py']
 };
 
-// Тестовый сценарий (встроен в HTML)
 const TEST_SCENARIO = `
 chromakey(None)
 narrator = C("", "#ffffff")
@@ -703,36 +854,25 @@ narrator("Тест завершён. Спасибо за просмотр!")
 // УТИЛИТА: Fetch без кэширования
 // ============================================================
 function fetchNoCache(url, options = {}) {
-    // Добавляем timestamp для cache-busting
     const separator = url.includes('?') ? '&' : '?';
     const cacheBustedUrl = `${url}${separator}_t=${Date.now()}`;
-    
-    // Добавляем заголовки для полного отключения кэша
     const noCacheHeaders = {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0'
     };
-    
     return fetch(cacheBustedUrl, {
         ...options,
-        headers: {
-            ...noCacheHeaders,
-            ...(options.headers || {})
-        },
+        headers: { ...noCacheHeaders, ...(options.headers || {}) },
         cache: 'no-store'
     });
 }
 
 // ============================================================
 // МЕНЕДЖЕР РЕСУРСОВ
-// Пробует локальный API, при неудаче переходит на фоллбэки
 // ============================================================
 const Resources = {
-    // Список ресурсов — заполняется при инициализации
     data: null,
-
-    // Работаем ли через локальный Python-сервер
     hasApi: false,
 
     async init() {
@@ -749,8 +889,6 @@ const Resources = {
         }
     },
 
-    // Получить случайный файл из категории
-    // Если рандом недоступен — вернуть фоллбэк
     getRandom(category) {
         if (this.hasApi && this.data && this.data[category]?.length > 0) {
             const list = this.data[category];
@@ -759,26 +897,20 @@ const Resources = {
         return FALLBACKS[category] || null;
     },
 
-    // Получить список сценариев
     getScenarios() {
-        if (this.hasApi && this.data?.scenarios?.length > 0) {
-            return this.data.scenarios;
-        }
+        if (this.hasApi && this.data?.scenarios?.length > 0) return this.data.scenarios;
         return FALLBACKS.scenarios;
     },
 
-    // Разрешить __random__ в строке
     resolve(str, category) {
         if (!str) return str;
-        if (str.includes('__random__')) {
-            return this.getRandom(category);
-        }
+        if (str.includes('__random__')) return this.getRandom(category);
         return str;
     }
 };
 
 // ============================================================
-// ПАРСЕР СЦЕНАРИЕВ (JS-версия оригинального Python-парсера)
+// ПАРСЕР СЦЕНАРИЕВ
 // ============================================================
 class ScenarioParser {
     constructor() {
@@ -793,27 +925,18 @@ class ScenarioParser {
         this.customCSS = [];
 
         const lines = code.trim().split('\n');
-
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line || line.startsWith('#')) continue;
-
-            try {
-                if (this._parseLine(line)) continue;
-            } catch(e) {
+            try { this._parseLine(line); } catch(e) {
                 console.warn(`Ошибка парсинга строки ${i+1}: ${line}`, e);
             }
         }
 
-        // Собираем список спрайтов для предзагрузки
         const spriteFiles = new Set();
         for (const cmd of this.commands) {
-            if (cmd.cmd === 'sprite' && cmd.file && !cmd.file.includes('__random__')) {
-                spriteFiles.add(cmd.file);
-            }
-            if (cmd.cmd === 'show' && cmd.sprite && !cmd.sprite.includes('__random__')) {
-                spriteFiles.add(cmd.sprite);
-            }
+            if (cmd.cmd === 'sprite' && cmd.file && !cmd.file.includes('__random__')) spriteFiles.add(cmd.file);
+            if (cmd.cmd === 'show'   && cmd.sprite && !cmd.sprite.includes('__random__')) spriteFiles.add(cmd.sprite);
         }
 
         return {
@@ -827,304 +950,151 @@ class ScenarioParser {
     _parseLine(line) {
         let m;
 
-        // Определение персонажа: hero = C("Имя", "#цвет")
         m = line.match(/^(\w+)\s*=\s*C\(\s*"([^"]*)"\s*,\s*"([^"]*)"\s*\)/);
-        if (m) {
-            this.characters[m[1]] = { name: m[2], color: m[3] };
-            return true;
-        }
+        if (m) { this.characters[m[1]] = { name: m[2], color: m[3] }; return true; }
 
-        // css()
-        m = line.match(/^css\(\s*"(.+?)"\s*\)/) ||
-            line.match(/^css\(\s*'(.+?)'\s*\)/);
-        if (m) {
-            this.customCSS.push(m[1]);
-            this.commands.push({ cmd: 'css', code: m[1] });
-            return true;
-        }
+        m = line.match(/^css\(\s*"(.+?)"\s*\)/) || line.match(/^css\(\s*'(.+?)'\s*\)/);
+        if (m) { this.customCSS.push(m[1]); this.commands.push({ cmd: 'css', code: m[1] }); return true; }
 
-        // custom_fx()
         m = line.match(/^custom_fx\(\s*"([^"]+)"\s*,\s*"([^"]+)"(.*)?\)/);
         if (m) {
             const rest = m[3] || '';
-            const nums = this._nums(rest);
-            const named = this._named(rest);
-            this.commands.push({
-                cmd: 'custom_fx',
-                target: m[1],
-                animation: m[2],
-                duration: nums[0] ?? 1.0,
-                timing: named.timing ?? 'ease',
-                iterations: named.iterations ?? 1,
-                keep: named.keep ?? false
-            });
+            const nums = this._nums(rest); const named = this._named(rest);
+            this.commands.push({ cmd: 'custom_fx', target: m[1], animation: m[2],
+                duration: nums[0] ?? 1.0, timing: named.timing ?? 'ease',
+                iterations: named.iterations ?? 1, keep: named.keep ?? false });
             return true;
         }
 
-        // clear()
         m = line.match(/^clear\(\s*([\d.]+)?\s*\)/);
-        if (m) {
-            this.commands.push({ cmd: 'clear', fade: parseFloat(m[1] ?? '0.3') });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'clear', fade: parseFloat(m[1] ?? '0.3') }); return true; }
 
-        // bg()
         m = line.match(/^bg\(\s*"([^"]+)"(?:\s*,\s*fade\s*=\s*([\d.]+))?\s*\)/);
-        if (m) {
-            this.commands.push({
-                cmd: 'bg',
-                file: Resources.resolve(m[1], 'bg'),
-                fade: parseFloat(m[2] ?? '0.8')
-            });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'bg', file: Resources.resolve(m[1], 'bg'), fade: parseFloat(m[2] ?? '0.8') }); return true; }
 
-        // fade_out()
         m = line.match(/^fade_out\(\s*"?([^",]*)"?\s*(?:,\s*([\d.]+))?\s*\)/);
-        if (m) {
-            this.commands.push({
-                cmd: 'fade_out',
-                color: m[1].trim() || 'black',
-                dur: parseFloat(m[2] ?? '0.6')
-            });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'fade_out', color: m[1].trim() || 'black', dur: parseFloat(m[2] ?? '0.6') }); return true; }
 
-        // fade_in()
         m = line.match(/^fade_in\(\s*([\d.]+)?\s*\)/);
-        if (m) {
-            this.commands.push({ cmd: 'fade_in', dur: parseFloat(m[1] ?? '0.6') });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'fade_in', dur: parseFloat(m[1] ?? '0.6') }); return true; }
 
-        // wait()
         m = line.match(/^wait\(\s*([\d.]+)\s*\)/);
-        if (m) {
-            this.commands.push({ cmd: 'wait', dur: parseFloat(m[1]) });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'wait', dur: parseFloat(m[1]) }); return true; }
 
-        // music()
         m = line.match(/^music\(([^)]*)\)/);
         if (m) {
             const args = m[1].trim();
             if (args === 'None' || args === '') {
                 this.commands.push({ cmd: 'music', file: null, fade_out: 2 });
             } else {
-                const strs = this._strs(args);
-                const named = this._named(args);
-                this.commands.push({
-                    cmd: 'music',
-                    file: Resources.resolve(strs[0], 'music'),
-                    fade_in: named.fade_in ?? 0,
-                    fade_out: named.fade_out ?? 0,
-                    start: named.start ?? 0,
-                    volume: named.volume ?? 1.0
-                });
+                const strs = this._strs(args); const named = this._named(args);
+                this.commands.push({ cmd: 'music', file: Resources.resolve(strs[0], 'music'),
+                    fade_in: named.fade_in ?? 0, fade_out: named.fade_out ?? 0,
+                    start: named.start ?? 0, volume: named.volume ?? 1.0 });
             }
             return true;
         }
 
-        // ambient()
         m = line.match(/^ambient\(([^)]*)\)/);
         if (m) {
             const args = m[1].trim();
             if (args === 'None' || args === '') {
                 this.commands.push({ cmd: 'ambient', file: null });
             } else {
-                const strs = this._strs(args);
-                const named = this._named(args);
-                this.commands.push({
-                    cmd: 'ambient',
-                    file: Resources.resolve(strs[0], 'ambient'),
-                    volume: named.volume ?? 1.0
-                });
+                const strs = this._strs(args); const named = this._named(args);
+                this.commands.push({ cmd: 'ambient', file: Resources.resolve(strs[0], 'ambient'), volume: named.volume ?? 1.0 });
             }
             return true;
         }
 
-        // sfx()
         m = line.match(/^sfx\(\s*"([^"]+)"(?:\s*,\s*volume\s*=\s*([\d.]+))?\s*\)/);
-        if (m) {
-            this.commands.push({
-                cmd: 'sfx',
-                file: Resources.resolve(m[1], 'sfx'),
-                volume: parseFloat(m[2] ?? '1.0')
-            });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'sfx', file: Resources.resolve(m[1], 'sfx'), volume: parseFloat(m[2] ?? '1.0') }); return true; }
 
-        // sprite()
         m = line.match(/^sprite\(\s*"([^"]+)"\s*,\s*"([^"]+)"(?:\s*,\s*"?([^",)]+)"?)?(.*)?\)/);
         if (m) {
-            const rest = m[4] || '';
-            const named = this._named(rest);
-            this.commands.push({
-                cmd: 'sprite',
-                id: m[1],
-                file: Resources.resolve(m[2], 'sprites'),
-                pos: m[3] ? m[3].trim() : null,
-                zoom: named.zoom ?? 1.0,
-                flip: named.flip ?? false,
-                transition: named.transition ?? 0
-            });
+            const rest = m[4] || ''; const named = this._named(rest);
+            this.commands.push({ cmd: 'sprite', id: m[1], file: Resources.resolve(m[2], 'sprites'),
+                pos: m[3] ? m[3].trim() : null, zoom: named.zoom ?? 1.0, flip: named.flip ?? false, transition: named.transition ?? 0 });
             return true;
         }
 
-        // show()
         m = line.match(/^show\(\s*"([^"]+)"\s*,\s*"?([^",)]+)"?(.*)?\)/);
         if (m) {
-            const rest = m[3] || '';
-            const named = this._named(rest);
-            this.commands.push({
-                cmd: 'show',
-                sprite: Resources.resolve(m[1], 'sprites'),
-                pos: m[2].trim(),
-                zoom: named.zoom ?? 1.0,
-                flip: named.flip ?? false,
-                transition: named.transition ?? 0
-            });
+            const rest = m[3] || ''; const named = this._named(rest);
+            this.commands.push({ cmd: 'show', sprite: Resources.resolve(m[1], 'sprites'),
+                pos: m[2].trim(), zoom: named.zoom ?? 1.0, flip: named.flip ?? false, transition: named.transition ?? 0 });
             return true;
         }
 
-        // hide()
         m = line.match(/^hide\(\s*"([^"]+)"(?:\s*,\s*fade\s*=\s*([\d.]+))?\s*\)/);
-        if (m) {
-            this.commands.push({
-                cmd: 'hide',
-                target: m[1],
-                fade: parseFloat(m[2] ?? '0.3')
-            });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'hide', target: m[1], fade: parseFloat(m[2] ?? '0.3') }); return true; }
 
-        // move()
         m = line.match(/^move\(\s*"([^"]+)"\s*,\s*"?([^",)]+)"?\s*,\s*([\d.]+)\s*\)/);
-        if (m) {
-            this.commands.push({
-                cmd: 'move',
-                target: m[1],
-                pos: m[2].trim(),
-                dur: parseFloat(m[3])
-            });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'move', target: m[1], pos: m[2].trim(), dur: parseFloat(m[3]) }); return true; }
 
-        // fx()
         m = line.match(/^fx\(\s*"([^"]+)"\s*,\s*"(\w+)"(.*)?\)/);
         if (m) {
             const nums = this._nums(m[3] || '');
-            this.commands.push({
-                cmd: 'fx',
-                target: m[1],
-                effect: m[2],
-                param1: nums[0] ?? 0.5,
-                param2: nums[1] ?? null
-            });
+            this.commands.push({ cmd: 'fx', target: m[1], effect: m[2], param1: nums[0] ?? 0.5, param2: nums[1] ?? null });
             return true;
         }
 
-        // daytime()
         m = line.match(/^daytime\(\s*"(\w+)"\s*\)/);
-        if (m) {
-            this.commands.push({ cmd: 'daytime', time: m[1] });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'daytime', time: m[1] }); return true; }
 
-        // screen()
         m = line.match(/^screen\(\s*"(\w+)"(.*)?\)/);
         if (m) {
-            const rest = m[2] || '';
-            const nums = this._nums(rest);
-            this.commands.push({
-                cmd: 'screen',
-                effect: m[1],
-                dur: nums[0] ?? 0.5
-            });
+            const nums = this._nums(m[2] || '');
+            this.commands.push({ cmd: 'screen', effect: m[1], dur: nums[0] ?? 0.5 });
             return true;
         }
 
-        // chromakey()
         m = line.match(/^chromakey\(([^)]*)\)/);
         if (m) {
             const arg = m[1].trim();
             if (arg === 'None' || arg === '') {
                 this.commands.push({ cmd: 'chromakey', color: null });
             } else {
-                const strs = this._strs(arg);
-                const named = this._named(arg);
-                this.commands.push({
-                    cmd: 'chromakey',
-                    color: strs[0] ?? null,
-                    tolerance: named.tolerance ?? 30
-                });
+                const strs = this._strs(arg); const named = this._named(arg);
+                this.commands.push({ cmd: 'chromakey', color: strs[0] ?? null, tolerance: named.tolerance ?? 30 });
             }
             return true;
         }
 
-        // label()
         m = line.match(/^label\(\s*"(\w+)"\s*\)/);
-        if (m) {
-            this.commands.push({ cmd: 'label', name: m[1] });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'label', name: m[1] }); return true; }
 
-        // jump()
         m = line.match(/^jump\(\s*"(\w+)"\s*\)/);
-        if (m) {
-            this.commands.push({ cmd: 'jump', target: m[1] });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'jump', target: m[1] }); return true; }
 
-        // set()
         m = line.match(/^set\(\s*"(\w+)"\s*,\s*(.+)\s*\)/);
-        if (m) {
-            this.commands.push({ cmd: 'set', var: m[1], val: this._val(m[2].trim()) });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'set', var: m[1], val: this._val(m[2].trim()) }); return true; }
 
-        // add()
         m = line.match(/^add\(\s*"(\w+)"\s*,\s*(-?[\d.]+)\s*\)/);
-        if (m) {
-            this.commands.push({ cmd: 'add', var: m[1], val: parseFloat(m[2]) });
-            return true;
-        }
+        if (m) { this.commands.push({ cmd: 'add', var: m[1], val: parseFloat(m[2]) }); return true; }
 
-        // if_()
         m = line.match(/^if_\(\s*"(\w+)"\s*\):\s*(.+)/);
         if (m) {
             const sub = new ScenarioParser();
-            const parsed = sub.parse(m[2].trim());
-            this.commands.push({ cmd: 'if', var: m[1], then: parsed.commands });
+            this.commands.push({ cmd: 'if', var: m[1], then: sub.parse(m[2].trim()).commands });
             return true;
         }
 
-        // if_cmp()
         m = line.match(/^if_cmp\(\s*"(\w+)"\s*,\s*"([<>=!]+)"\s*,\s*(-?[\d.]+)\s*\):\s*(.+)/);
         if (m) {
             const sub = new ScenarioParser();
-            const parsed = sub.parse(m[4].trim());
-            this.commands.push({
-                cmd: 'if_cmp',
-                var: m[1], op: m[2], val: parseFloat(m[3]),
-                then: parsed.commands
-            });
+            this.commands.push({ cmd: 'if_cmp', var: m[1], op: m[2], val: parseFloat(m[3]), then: sub.parse(m[4].trim()).commands });
             return true;
         }
 
-        // choice()
         m = line.match(/^choice\((.+)\)/);
         if (m) {
-            const args = this._strs(m[1]);
-            const options = [];
-            for (let j = 0; j + 1 < args.length; j += 2) {
-                options.push({ text: args[j], target: args[j+1] });
-            }
+            const args = this._strs(m[1]); const options = [];
+            for (let j = 0; j + 1 < args.length; j += 2) options.push({ text: args[j], target: args[j+1] });
             this.commands.push({ cmd: 'choice', options });
             return true;
         }
 
-        // Реплика персонажа: hero("Текст")
         m = line.match(/^(\w+)\(\s*"(.*)"\s*\)/);
         if (m && this.characters[m[1]]) {
             const ch = this.characters[m[1]];
@@ -1135,23 +1105,13 @@ class ScenarioParser {
         return false;
     }
 
-    // Вспомогательные методы
-    _strs(s) {
-        return Array.from(s.matchAll(/"([^"]*)"/g), m => m[1]);
-    }
-
-    _nums(s) {
-        return Array.from(s.matchAll(/[\d.]+/g), m => parseFloat(m[0]));
-    }
-
+    _strs(s)  { return Array.from(s.matchAll(/"([^"]*)"/g), m => m[1]); }
+    _nums(s)  { return Array.from(s.matchAll(/[\d.]+/g), m => parseFloat(m[0])); }
     _named(s) {
         const result = {};
-        for (const m of s.matchAll(/(\w+)\s*=\s*([^,)]+)/g)) {
-            result[m[1]] = this._val(m[2].trim());
-        }
+        for (const m of s.matchAll(/(\w+)\s*=\s*([^,)]+)/g)) result[m[1]] = this._val(m[2].trim());
         return result;
     }
-
     _val(s) {
         s = s.replace(/^['"]|['"]$/g, '');
         if (s === 'True') return true;
@@ -1172,26 +1132,20 @@ const VN = {
     labels: {},
     sprites: {},
     spritesByFile: {},
-
     imageCache: {},
-
     currentMusic: null,
     currentAmbient: null,
-
     chromakeyColor: null,
     chromakeyTolerance: 30,
-
     isTyping: false,
     typeAnimationId: null,
     fullText: '',
     currentTextIndex: 0,
     waitingForClick: false,
-
     settings: { volMusic: 40, volAmbient: 40, volSfx: 40, textSpeed: 90 },
-
     dom: {},
     isRunning: false,
-
+    isPaused: false,          // флаг паузы
     customStylesAdded: new Set(),
 
     async init() {
@@ -1217,16 +1171,14 @@ const VN = {
             chromakeyCanvas:    document.getElementById('chromakey-canvas'),
             loadingOverlay:     document.getElementById('loading-overlay'),
             loadingText:        document.getElementById('loading-text'),
-            customStyles:       document.getElementById('custom-styles')
+            customStyles:       document.getElementById('custom-styles'),
+            pauseMenu:          document.getElementById('pause-menu'),
+            pauseOptionsPanel:  document.getElementById('pause-options-panel')
         };
 
         this.loadSettings();
         this.setupEventListeners();
-
-        // Инициализируем менеджер ресурсов
         await Resources.init();
-
-        // Инициализируем меню
         await this.initMenu();
     },
 
@@ -1236,10 +1188,8 @@ const VN = {
             if (saved) Object.assign(this.settings, JSON.parse(saved));
         } catch(e) {}
 
-        document.getElementById('opt-music').value   = this.settings.volMusic;
-        document.getElementById('opt-ambient').value = this.settings.volAmbient;
-        document.getElementById('opt-sfx').value     = this.settings.volSfx;
-        document.getElementById('opt-speed').value   = this.settings.textSpeed;
+        // Синхронизируем оба набора слайдеров
+        this._syncSlidersFromSettings();
         this.updateOptionLabels();
     },
 
@@ -1247,17 +1197,34 @@ const VN = {
         try { localStorage.setItem('vn-engine-settings', JSON.stringify(this.settings)); } catch(e) {}
     },
 
-    updateOptionLabels() {
-        document.getElementById('opt-music-val').textContent   = this.settings.volMusic + '%';
-        document.getElementById('opt-ambient-val').textContent = this.settings.volAmbient + '%';
-        document.getElementById('opt-sfx-val').textContent     = this.settings.volSfx + '%';
-        document.getElementById('opt-speed-val').textContent   = this.settings.textSpeed + '%';
+    // Устанавливает значения HTML-слайдеров по this.settings
+    _syncSlidersFromSettings() {
+        document.getElementById('opt-music').value    = this.settings.volMusic;
+        document.getElementById('opt-ambient').value  = this.settings.volAmbient;
+        document.getElementById('opt-sfx').value      = this.settings.volSfx;
+        document.getElementById('opt-speed').value    = this.settings.textSpeed;
+        document.getElementById('popt-music').value   = this.settings.volMusic;
+        document.getElementById('popt-ambient').value = this.settings.volAmbient;
+        document.getElementById('popt-sfx').value     = this.settings.volSfx;
+        document.getElementById('popt-speed').value   = this.settings.textSpeed;
+    },
 
-        if (this.currentMusic)  this.currentMusic.volume  = this.settings.volMusic / 100;
+    updateOptionLabels() {
+        document.getElementById('opt-music-val').textContent    = this.settings.volMusic + '%';
+        document.getElementById('opt-ambient-val').textContent  = this.settings.volAmbient + '%';
+        document.getElementById('opt-sfx-val').textContent      = this.settings.volSfx + '%';
+        document.getElementById('opt-speed-val').textContent    = this.settings.textSpeed + '%';
+        document.getElementById('popt-music-val').textContent   = this.settings.volMusic + '%';
+        document.getElementById('popt-ambient-val').textContent = this.settings.volAmbient + '%';
+        document.getElementById('popt-sfx-val').textContent     = this.settings.volSfx + '%';
+        document.getElementById('popt-speed-val').textContent   = this.settings.textSpeed + '%';
+
+        if (this.currentMusic)   this.currentMusic.volume   = this.settings.volMusic   / 100;
         if (this.currentAmbient) this.currentAmbient.volume = this.settings.volAmbient / 100;
     },
 
     setupEventListeners() {
+        // Слайдеры главного меню
         const optMap = {
             'opt-music':   'volMusic',
             'opt-ambient': 'volAmbient',
@@ -1267,24 +1234,165 @@ const VN = {
         Object.entries(optMap).forEach(([id, key]) => {
             document.getElementById(id)?.addEventListener('input', e => {
                 this.settings[key] = parseInt(e.target.value);
+                // Синхронизируем зеркальный слайдер паузы
+                const mirror = document.getElementById('p' + id);
+                if (mirror) mirror.value = this.settings[key];
                 this.updateOptionLabels();
                 this.saveSettings();
             });
         });
 
+        // Слайдеры меню паузы
+        const poptMap = {
+            'popt-music':   'volMusic',
+            'popt-ambient': 'volAmbient',
+            'popt-sfx':     'volSfx',
+            'popt-speed':   'textSpeed'
+        };
+        Object.entries(poptMap).forEach(([id, key]) => {
+            document.getElementById(id)?.addEventListener('input', e => {
+                this.settings[key] = parseInt(e.target.value);
+                // Синхронизируем зеркальный слайдер главного меню
+                const mirror = document.getElementById(id.replace('popt-', 'opt-'));
+                if (mirror) mirror.value = this.settings[key];
+                this.updateOptionLabels();
+                this.saveSettings();
+            });
+        });
+
+        // Клик для продвижения диалога
         this.dom.clickArea.addEventListener('click', e => { e.preventDefault(); this.handleAdvance(); });
         this.dom.textbox.addEventListener('click',   e => { e.preventDefault(); this.handleAdvance(); });
 
+        // Клавиатура
         document.addEventListener('keydown', e => {
-            if ((e.code === 'Space' || e.code === 'Enter') && this.isRunning) {
+            // Esc — пауза/возобновление (только во время сценария)
+            if (e.code === 'Escape') {
+                e.preventDefault();
+                if (this.isRunning) {
+                    if (this.isPaused) {
+                        // Если открыты настройки паузы — закрываем их
+                        if (this.dom.pauseOptionsPanel.classList.contains('active')) {
+                            this.pauseHideOptions();
+                        } else {
+                            this.resumeGame();
+                        }
+                    } else {
+                        this.pauseGame();
+                    }
+                }
+                return;
+            }
+
+            // Space / Enter — продвижение диалога (только если не на паузе)
+            if ((e.code === 'Space' || e.code === 'Enter') && this.isRunning && !this.isPaused) {
                 e.preventDefault();
                 this.handleAdvance();
             }
         });
     },
 
+    // ============================================================
+    // ПАУЗА
+    // ============================================================
+    pauseGame() {
+        if (!this.isRunning || this.isPaused) return;
+        this.isPaused = true;
+
+        // Глушим аудио (не останавливаем — просто снижаем громкость)
+        if (this.currentMusic)   this.currentMusic.volume   = 0;
+        if (this.currentAmbient) this.currentAmbient.volume = 0;
+
+        // Блокируем клики по игровому полю
+        this.dom.clickArea.classList.remove('active');
+
+        // Показываем меню паузы
+        this.dom.pauseMenu.classList.add('visible');
+    },
+
+    resumeGame() {
+        if (!this.isPaused) return;
+        this.isPaused = false;
+
+        // Закрываем настройки если открыты
+        this.dom.pauseOptionsPanel.classList.remove('active');
+
+        // Скрываем меню паузы
+        this.dom.pauseMenu.classList.remove('visible');
+
+        // Восстанавливаем громкость аудио
+        if (this.currentMusic)   this.currentMusic.volume   = this.settings.volMusic   / 100;
+        if (this.currentAmbient) this.currentAmbient.volume = this.settings.volAmbient / 100;
+
+        // Возвращаем клики по игровому полю (только если сценарий ещё ожидает клика)
+        if (this.waitingForClick) this.dom.clickArea.classList.add('active');
+    },
+
+    pauseShowOptions() {
+        this._syncSlidersFromSettings();
+        this.dom.pauseOptionsPanel.classList.add('active');
+    },
+
+    pauseHideOptions() {
+        this.dom.pauseOptionsPanel.classList.remove('active');
+    },
+
+    returnToMainMenu() {
+        // Сбрасываем паузу
+        this.isPaused = false;
+        this.dom.pauseMenu.classList.remove('visible');
+        this.dom.pauseOptionsPanel.classList.remove('active');
+
+        // Останавливаем сценарий без стандартного endScenario (он показывает меню сам)
+        this.isRunning = false;
+        if (this.typeAnimationId) clearTimeout(this.typeAnimationId);
+        this.isTyping = false;
+        this.waitingForClick = false;
+
+        // Останавливаем аудио
+        if (this.currentMusic) {
+            this.fadeOutAudio(this.currentMusic, 0.5);
+            const m = this.currentMusic;
+            setTimeout(() => { m.pause(); }, 550);
+            this.currentMusic = null;
+        }
+        if (this.currentAmbient) {
+            this.currentAmbient.pause();
+            this.currentAmbient = null;
+        }
+
+        // Убираем UI сценария
+        this.dom.textbox.classList.remove('visible');
+        this.dom.clickArea.classList.remove('active');
+        this.dom.choiceContainer.classList.remove('visible');
+        this.dom.continueIndicator.classList.remove('visible');
+
+        // Плавно скрываем оверлеи
+        this.dom.fadeOverlay.style.transition = 'opacity 0.4s ease';
+        this.dom.fadeOverlay.style.opacity = '0';
+        this.dom.flashOverlay.style.opacity = '0';
+        this.dom.daytimeOverlay.style.background = '';
+
+        // Скрываем спрайты
+        this.dom.spritesLayer.querySelectorAll('.sprite').forEach(el => {
+            el.classList.add('hiding');
+            el.classList.remove('visible');
+        });
+        setTimeout(() => {
+            this.dom.spritesLayer.innerHTML = '';
+            this.sprites = {};
+            this.spritesByFile = {};
+        }, 350);
+
+        // Возвращаемся в главное меню
+        setTimeout(() => {
+            this.dom.menu.classList.remove('hidden');
+            this.initMenu();
+        }, 400);
+    },
+
     handleAdvance() {
-        if (!this.isRunning) return;
+        if (!this.isRunning || this.isPaused) return;
         if (this.isTyping) {
             this.finishTyping();
         } else if (this.waitingForClick) {
@@ -1295,7 +1403,6 @@ const VN = {
     },
 
     async initMenu() {
-        // Фон меню
         const menuBg = Resources.hasApi
             ? (Resources.data?.bg?.find(b => b.includes('bus_stop')) || Resources.getRandom('bg'))
             : FALLBACKS.menuBg;
@@ -1304,7 +1411,6 @@ const VN = {
             this.dom.menuBg.style.backgroundImage = `url('bg/${menuBg}?_t=${Date.now()}')`;
         }
 
-        // Музыка меню
         if (!this.isRunning && !this.currentMusic) {
             const menuMusic = Resources.hasApi
                 ? (Resources.data?.music?.find(m => m.includes('blow_with_the_fires')) || Resources.getRandom('music'))
@@ -1314,7 +1420,6 @@ const VN = {
                 this.currentMusic = new Audio('audio/music/' + menuMusic + '?_t=' + Date.now());
                 this.currentMusic.loop = true;
                 this.currentMusic.volume = this.settings.volMusic / 100;
-                // Автовоспроизведение только после взаимодействия пользователя
                 document.body.addEventListener('click', () => {
                     if (this.currentMusic?.paused && !this.isRunning) {
                         this.currentMusic.play().catch(() => {});
@@ -1330,7 +1435,6 @@ const VN = {
     async showScenarios() {
         const scenarios = Resources.getScenarios();
         const c = this.dom.scenariosContainer;
-
         if (scenarios.length === 0) {
             c.innerHTML = '<p style="color:#666;text-align:center;padding:1em;">Сценарии не найдены</p>';
         } else {
@@ -1355,10 +1459,8 @@ const VN = {
     async preloadImages(urls) {
         const toLoad = urls.filter(url => !this.imageCache[url]);
         if (toLoad.length === 0) return;
-
         let loaded = 0;
         const total = toLoad.length;
-
         await Promise.all(toLoad.map(url => new Promise(resolve => {
             const img = new Image();
             img.onload = () => {
@@ -1384,7 +1486,6 @@ const VN = {
         this.customStylesAdded.clear();
     },
 
-    // Запуск тестового сценария (встроен в HTML)
     async startTest() {
         this.dom.menu.classList.add('hidden');
         this.showLoading();
@@ -1399,7 +1500,6 @@ const VN = {
         }
     },
 
-    // Загрузка сценария из файла
     async startScenario(name) {
         this.hideScenarios();
         this.dom.menu.classList.add('hidden');
@@ -1420,29 +1520,27 @@ const VN = {
 
     async runScenario(data) {
         this.isRunning = true;
-        this.commands = data.commands || [];
-        this.cmdIndex = 0;
+        this.isPaused  = false;
+        this.commands  = data.commands || [];
+        this.cmdIndex  = 0;
         this.variables = {};
-        this.sprites = {};
+        this.sprites   = {};
         this.spritesByFile = {};
-        this.isTyping = false;
+        this.isTyping  = false;
         this.waitingForClick = false;
 
         this.resetCustomCSS();
         if (data.custom_css) data.custom_css.forEach(css => this.addCustomCSS(css));
 
-        // Предзагрузка спрайтов (только конкретных файлов, без __random__)
         if (data.sprites?.length > 0) {
             await this.preloadImages(data.sprites.map(s => 'sprites/' + s));
         }
 
         this.hideLoading();
 
-        // Строим таблицу меток
         this.labels = {};
         this.commands.forEach((cmd, i) => { if (cmd.cmd === 'label') this.labels[cmd.name] = i; });
 
-        // Сброс UI
         this.dom.textbox.classList.add('visible');
         this.dom.clickArea.classList.add('active');
         this.dom.continueIndicator.classList.remove('visible');
@@ -1457,12 +1555,14 @@ const VN = {
         this.dom.flashOverlay.style.opacity = '0';
         this.dom.speaker.textContent = '';
         this.dom.dialogue.textContent = '';
+        // Меню паузы скрыто
+        this.dom.pauseMenu.classList.remove('visible');
+        this.dom.pauseOptionsPanel.classList.remove('active');
 
         if (this.currentMusic)  { this.currentMusic.pause();  this.currentMusic = null; }
         if (this.currentAmbient){ this.currentAmbient.pause(); this.currentAmbient = null; }
 
         void this.dom.fadeOverlay.offsetHeight;
-
         this.executeNext();
     },
 
@@ -1475,32 +1575,32 @@ const VN = {
         if (!cmd?.cmd) { this.executeNext(); return; }
         try {
             const h = {
-                bg:         () => this.cmdBg(cmd),
-                fade_out:   () => this.cmdFadeOut(cmd),
-                fade_in:    () => this.cmdFadeIn(cmd),
-                wait:       () => setTimeout(() => this.executeNext(), (cmd.dur || 0.5) * 1000),
-                music:      () => this.cmdMusic(cmd),
-                ambient:    () => this.cmdAmbient(cmd),
-                sfx:        () => this.cmdSfx(cmd),
-                sprite:     () => this.cmdSprite(cmd),
-                show:       () => this.cmdShow(cmd),
-                hide:       () => this.cmdHide(cmd),
-                clear:      () => this.cmdClear(cmd),
-                move:       () => this.cmdMove(cmd),
-                fx:         () => this.cmdFx(cmd),
-                custom_fx:  () => this.cmdCustomFx(cmd),
-                css:        () => { this.addCustomCSS(cmd.code); this.executeNext(); },
-                daytime:    () => this.cmdDaytime(cmd),
-                screen:     () => this.cmdScreen(cmd),
-                chromakey:  () => { this.chromakeyColor = cmd.color; this.chromakeyTolerance = cmd.tolerance || 30; this.executeNext(); },
-                say:        () => this.cmdSay(cmd),
-                choice:     () => this.cmdChoice(cmd),
-                label:      () => this.executeNext(),
-                jump:       () => { if (this.labels[cmd.target] !== undefined) this.cmdIndex = this.labels[cmd.target]; this.executeNext(); },
-                set:        () => { this.variables[cmd.var] = cmd.val; this.executeNext(); },
-                add:        () => { this.variables[cmd.var] = (this.variables[cmd.var] || 0) + cmd.val; this.executeNext(); },
-                if:         () => this.cmdIf(cmd),
-                if_cmp:     () => this.cmdIfCmp(cmd)
+                bg:        () => this.cmdBg(cmd),
+                fade_out:  () => this.cmdFadeOut(cmd),
+                fade_in:   () => this.cmdFadeIn(cmd),
+                wait:      () => setTimeout(() => this.executeNext(), (cmd.dur || 0.5) * 1000),
+                music:     () => this.cmdMusic(cmd),
+                ambient:   () => this.cmdAmbient(cmd),
+                sfx:       () => this.cmdSfx(cmd),
+                sprite:    () => this.cmdSprite(cmd),
+                show:      () => this.cmdShow(cmd),
+                hide:      () => this.cmdHide(cmd),
+                clear:     () => this.cmdClear(cmd),
+                move:      () => this.cmdMove(cmd),
+                fx:        () => this.cmdFx(cmd),
+                custom_fx: () => this.cmdCustomFx(cmd),
+                css:       () => { this.addCustomCSS(cmd.code); this.executeNext(); },
+                daytime:   () => this.cmdDaytime(cmd),
+                screen:    () => this.cmdScreen(cmd),
+                chromakey: () => { this.chromakeyColor = cmd.color; this.chromakeyTolerance = cmd.tolerance || 30; this.executeNext(); },
+                say:       () => this.cmdSay(cmd),
+                choice:    () => this.cmdChoice(cmd),
+                label:     () => this.executeNext(),
+                jump:      () => { if (this.labels[cmd.target] !== undefined) this.cmdIndex = this.labels[cmd.target]; this.executeNext(); },
+                set:       () => { this.variables[cmd.var] = cmd.val; this.executeNext(); },
+                add:       () => { this.variables[cmd.var] = (this.variables[cmd.var] || 0) + cmd.val; this.executeNext(); },
+                if:        () => this.cmdIf(cmd),
+                if_cmp:    () => this.cmdIfCmp(cmd)
             };
             (h[cmd.cmd] || (() => this.executeNext()))();
         } catch(e) { console.error('Ошибка команды:', cmd, e); this.executeNext(); }
@@ -1547,13 +1647,11 @@ const VN = {
             this.currentMusic = null;
         }
         if (!cmd.file) { this.executeNext(); return; }
-
         const audio = new Audio('audio/music/' + cmd.file + '?_t=' + Date.now());
         audio.loop = true;
         audio.volume = 0;
         if (cmd.start) audio.currentTime = cmd.start;
         this.currentMusic = audio;
-
         audio.play().then(() => {
             const target = (cmd.volume || 1) * this.settings.volMusic / 100;
             cmd.fade_in > 0
@@ -1586,7 +1684,6 @@ const VN = {
         if (!cmd.file) { this.executeNext(); return; }
         let el = this.sprites[cmd.id];
         const isNew = !el;
-
         if (isNew) {
             el = document.createElement('div');
             el.className = 'sprite';
@@ -1595,19 +1692,15 @@ const VN = {
             this.dom.spritesLayer.appendChild(el);
             this.sprites[cmd.id] = el;
         }
-
         if (cmd.pos != null) el.style.left = `${this.parsePosition(cmd.pos)}%`;
-
         const inner = el.querySelector('.sprite-inner');
         const zoom = cmd.zoom || 1.0;
         inner.style.setProperty('--sprite-scale', zoom);
         inner.style.transform = `scale(${zoom})`;
         el.style.transform = `translateX(-50%)${cmd.flip ? ' scaleX(-1)' : ''}`;
-
         this.setSpriteImage(el, cmd.file, cmd.transition || 0, () => {
             if (isNew) requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
         });
-
         this.executeNext();
     },
 
@@ -1615,7 +1708,6 @@ const VN = {
         if (!cmd.sprite) { this.executeNext(); return; }
         let el = this.spritesByFile[cmd.sprite];
         const isNew = !el;
-
         if (isNew) {
             el = document.createElement('div');
             el.className = 'sprite';
@@ -1623,18 +1715,15 @@ const VN = {
             this.dom.spritesLayer.appendChild(el);
             this.spritesByFile[cmd.sprite] = el;
         }
-
         el.style.left = `${this.parsePosition(cmd.pos)}%`;
         const inner = el.querySelector('.sprite-inner');
         const zoom = cmd.zoom || 1.0;
         inner.style.setProperty('--sprite-scale', zoom);
         inner.style.transform = `scale(${zoom})`;
         el.style.transform = `translateX(-50%)${cmd.flip ? ' scaleX(-1)' : ''}`;
-
         this.setSpriteImage(el, cmd.sprite, cmd.transition || 0, () => {
             if (isNew) requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
         });
-
         this.executeNext();
     },
 
@@ -1647,17 +1736,14 @@ const VN = {
 
     setSpriteImage(container, filename, transition, onComplete) {
         const inner = container.querySelector('.sprite-inner');
-        const url = 'sprites/' + filename + '?_t=' + Date.now();
-
-        let img;
         const cacheKey = 'sprites/' + filename;
+        let img;
         if (this.imageCache[cacheKey]) {
             img = this.imageCache[cacheKey].cloneNode();
         } else {
             img = new Image();
-            img.src = url;
+            img.src = 'sprites/' + filename + '?_t=' + Date.now();
         }
-
         const apply = (finalImg) => {
             if (this.chromakeyColor) {
                 this.applyChromakeyToImage(finalImg, processed => {
@@ -1669,13 +1755,8 @@ const VN = {
                 onComplete?.();
             }
         };
-
-        if (img.complete && img.naturalHeight !== 0) {
-            apply(img);
-        } else {
-            img.onload  = () => apply(img);
-            img.onerror = () => onComplete?.();
-        }
+        if (img.complete && img.naturalHeight !== 0) apply(img);
+        else { img.onload = () => apply(img); img.onerror = () => onComplete?.(); }
     },
 
     applyChromakeyToImage(img, callback) {
@@ -1695,7 +1776,6 @@ const VN = {
     replaceImage(container, newImg, transition = 0) {
         const existing = container.querySelector('img');
         newImg.style.cssText = 'display:block;margin:0 auto;';
-
         if (existing && transition > 0) {
             Object.assign(newImg.style, {
                 position: 'absolute', top: '0', left: '50%',
@@ -1728,8 +1808,8 @@ const VN = {
         const tol = this.chromakeyTolerance;
         for (let i = 0; i < d.length; i += 4) {
             const dist = Math.sqrt((d[i]-r)**2 + (d[i+1]-g)**2 + (d[i+2]-b)**2);
-            if (dist < tol)         d[i+3] = 0;
-            else if (dist < tol*2)  d[i+3] = Math.floor(255 * (dist - tol) / tol);
+            if (dist < tol)        d[i+3] = 0;
+            else if (dist < tol*2) d[i+3] = Math.floor(255 * (dist - tol) / tol);
         }
     },
 
@@ -1737,19 +1817,16 @@ const VN = {
         const fade = (cmd.fade || 0.3) * 1000;
         if (cmd.target === '__all__' || cmd.target === 'all') {
             [...Object.values(this.sprites), ...Object.values(this.spritesByFile)].forEach(el => {
-                el.classList.add('hiding');
-                el.classList.remove('visible');
+                el.classList.add('hiding'); el.classList.remove('visible');
             });
             setTimeout(() => {
                 this.dom.spritesLayer.innerHTML = '';
-                this.sprites = {};
-                this.spritesByFile = {};
+                this.sprites = {}; this.spritesByFile = {};
             }, fade);
         } else {
             const el = this.sprites[cmd.target] || this.spritesByFile[cmd.target];
             if (el) {
-                el.classList.add('hiding');
-                el.classList.remove('visible');
+                el.classList.add('hiding'); el.classList.remove('visible');
                 setTimeout(() => {
                     el.remove();
                     delete this.sprites[cmd.target];
@@ -1763,13 +1840,11 @@ const VN = {
     cmdClear(cmd) {
         const fade = (cmd.fade || 0.3) * 1000;
         [...Object.values(this.sprites), ...Object.values(this.spritesByFile)].forEach(el => {
-            el.classList.add('hiding');
-            el.classList.remove('visible');
+            el.classList.add('hiding'); el.classList.remove('visible');
         });
         setTimeout(() => {
             this.dom.spritesLayer.innerHTML = '';
-            this.sprites = {};
-            this.spritesByFile = {};
+            this.sprites = {}; this.spritesByFile = {};
             this.executeNext();
         }, fade);
     },
@@ -1787,13 +1862,10 @@ const VN = {
         const el = this.sprites[cmd.target] || this.spritesByFile[cmd.target];
         const inner = el?.querySelector('.sprite-inner');
         if (!inner) { this.executeNext(); return; }
-
         const fx  = cmd.effect;
         const dur = cmd.param1 || 0.5;
-
         inner.style.animation = 'none';
         void inner.offsetHeight;
-
         const effects = {
             shake:   () => { inner.style.animation = `sprite-shake ${dur}s ease`; setTimeout(() => { inner.style.animation = ''; }, dur * 1000); },
             pulse:   () => { inner.style.animation = `sprite-pulse ${dur}s ease infinite`; setTimeout(() => { inner.style.animation = ''; }, dur * 1000); },
@@ -1805,8 +1877,7 @@ const VN = {
             hop:     () => { inner.style.animation = `sprite-hop 0.3s ease`; setTimeout(() => { inner.style.animation = ''; }, 350); },
             nod:     () => { inner.style.animation = `sprite-nod 0.4s ease`; setTimeout(() => { inner.style.animation = ''; }, 450); },
             zoom:    () => {
-                const scale = dur;
-                const time  = cmd.param2 || 0.3;
+                const scale = dur; const time = cmd.param2 || 0.3;
                 inner.style.setProperty('--sprite-scale', scale);
                 inner.style.transition = `transform ${time}s cubic-bezier(0.4, 0, 0.2, 1)`;
                 requestAnimationFrame(() => { inner.style.transform = `scale(${scale})`; });
@@ -1825,7 +1896,6 @@ const VN = {
             dim:     () => { inner.style.filter = 'brightness(0.6)'; inner.style.transition = 'filter 0.3s ease'; setTimeout(() => { inner.style.filter = ''; }, dur * 1000); },
             reset:   () => { inner.style.animation = ''; inner.style.filter = ''; inner.style.transform = `scale(${inner.style.getPropertyValue('--sprite-scale') || 1})`; }
         };
-
         (effects[fx] || (() => {}))();
         this.executeNext();
     },
@@ -1834,13 +1904,10 @@ const VN = {
         const el = this.sprites[cmd.target] || this.spritesByFile[cmd.target];
         const inner = el?.querySelector('.sprite-inner');
         if (!inner) { this.executeNext(); return; }
-
         inner.style.animation = 'none';
         void inner.offsetHeight;
-
         const iterStr = cmd.iterations === 'infinite' ? 'infinite' : cmd.iterations;
         inner.style.animation = `${cmd.animation} ${cmd.duration}s ${cmd.timing} ${iterStr}`;
-
         if (!cmd.keep && cmd.iterations !== 'infinite') {
             setTimeout(() => { inner.style.animation = ''; }, cmd.duration * cmd.iterations * 1000 + 50);
         }
@@ -1886,7 +1953,6 @@ const VN = {
         this.waitingForClick = false;
         this.dom.dialogue.textContent = '';
         this.dom.continueIndicator.classList.remove('visible');
-
         if (this.settings.textSpeed >= 100) {
             this.dom.dialogue.textContent = this.fullText;
             this.finishText();
@@ -1923,7 +1989,6 @@ const VN = {
         const c = this.dom.choiceContainer;
         c.innerHTML = '';
         this.dom.continueIndicator.classList.remove('visible');
-
         cmd.options.forEach((opt, i) => {
             const btn = document.createElement('button');
             btn.className = 'choice-btn';
@@ -1991,6 +2056,9 @@ const VN = {
 
     endScenario() {
         this.isRunning = false;
+        this.isPaused  = false;
+        this.dom.pauseMenu.classList.remove('visible');
+        this.dom.pauseOptionsPanel.classList.remove('active');
 
         this.dom.fadeOverlay.style.transition = 'opacity 0.8s ease';
         void this.dom.fadeOverlay.offsetHeight;
@@ -1999,13 +2067,11 @@ const VN = {
         this.dom.daytimeOverlay.style.background = '';
 
         this.dom.spritesLayer.querySelectorAll('.sprite').forEach(el => {
-            el.classList.add('hiding');
-            el.classList.remove('visible');
+            el.classList.add('hiding'); el.classList.remove('visible');
         });
         setTimeout(() => {
             this.dom.spritesLayer.innerHTML = '';
-            this.sprites = {};
-            this.spritesByFile = {};
+            this.sprites = {}; this.spritesByFile = {};
         }, 400);
 
         this.dom.textbox.classList.remove('visible');
