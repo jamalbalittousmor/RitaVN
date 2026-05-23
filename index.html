@@ -36,8 +36,10 @@ html, body {
     position: absolute;
     inset: 0;
     background-size: cover;
-    background-position: center;
-    will-change: opacity, transform;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-color: #000;
+    will-change: opacity;
 }
 #bg-current { z-index: 1; }
 #bg-next    { z-index: 2; opacity: 0; pointer-events: none; }
@@ -255,7 +257,8 @@ html, body {
     position: absolute;
     inset: 0;
     background-size: cover;
-    background-position: center;
+    background-position: center center;
+    background-repeat: no-repeat;
     filter: blur(4px) brightness(0.55);
 }
 
@@ -429,22 +432,9 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
     transform: translateY(-1px);
 }
 
-/* Карточка мода с метаданными */
-.mod-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25em;
-}
-.mod-card-title {
-    font-size: 1.05em;
-    font-weight: 600;
-    color: #fff;
-}
-.mod-card-meta {
-    font-size: 0.82em;
-    color: #888;
-    font-weight: 400;
-}
+.mod-card { display: flex; flex-direction: column; gap: 0.25em; }
+.mod-card-title { font-size: 1.05em; font-weight: 600; color: #fff; }
+.mod-card-meta { font-size: 0.82em; color: #888; font-weight: 400; }
 .mod-card-tag {
     display: inline-block;
     font-size: 0.72em;
@@ -483,11 +473,7 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
 }
 #loading-overlay.visible { opacity: 1; pointer-events: auto; }
 
-#loading-text {
-    color: #fff;
-    font-size: 1.3em;
-    font-weight: 500;
-}
+#loading-text { color: #fff; font-size: 1.3em; font-weight: 500; }
 
 .loading-bar-wrap {
     width: 280px;
@@ -586,7 +572,6 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
     border-color: rgba(255,120,130,0.4);
 }
 
-/* Настройки внутри паузы */
 #pause-options-panel {
     position: absolute;
     inset: 0;
@@ -740,13 +725,11 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
     <div id="fade-overlay"></div>
     <div id="click-area"></div>
 
-    <!-- Оверлей главы -->
     <div id="chapter-overlay">
         <div id="chapter-subtitle-text"></div>
         <div id="chapter-title-text"></div>
     </div>
 
-    <!-- Полноэкранный текст -->
     <div id="fullscreen-text-overlay">
         <div id="fullscreen-text-content"></div>
     </div>
@@ -758,7 +741,6 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
     </div>
     <div id="choice-container"></div>
 
-    <!-- Загрузка -->
     <div id="loading-overlay">
         <div id="loading-text">Загрузка...</div>
         <div class="loading-bar-wrap">
@@ -766,7 +748,6 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
         </div>
     </div>
 
-    <!-- Главное меню -->
     <div id="menu">
         <div id="menu-bg"></div>
         <div id="menu-overlay"></div>
@@ -778,7 +759,6 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
         </div>
     </div>
 
-    <!-- Настройки из главного меню -->
     <div id="options-panel" class="panel">
         <h2 class="panel-title">Настройки</h2>
         <div class="option-row">
@@ -804,14 +784,12 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
         <button class="back-btn" onclick="VN.hideOptions()">Назад</button>
     </div>
 
-    <!-- Выбор сценария/мода -->
     <div id="scenario-panel" class="panel">
         <h2 class="panel-title">Выберите сценарий</h2>
         <div id="scenarios-container"></div>
         <button class="back-btn" onclick="VN.hideScenarios()">Назад</button>
     </div>
 
-    <!-- Пауза -->
     <div id="pause-menu">
         <div id="pause-backdrop"></div>
         <div id="pause-content">
@@ -822,7 +800,6 @@ input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.12); }
         </div>
     </div>
 
-    <!-- Настройки внутри паузы -->
     <div id="pause-options-panel">
         <h2 class="panel-title">Настройки</h2>
         <div class="option-row">
@@ -865,7 +842,6 @@ const FALLBACKS = {
     music:     'a_promise_from_distant_days.ogg',
     menuMusic: 'blow_with_the_fires.ogg',
     menuBg:    'ext_beach_sunset.jpg',
-    // Для браузерного режима: известные моды
     mods: [
         {
             id:       'rita',
@@ -877,95 +853,97 @@ const FALLBACKS = {
     ]
 };
 
+// ── Тестовый сценарий ──
 const TEST_SCENARIO = `
 chromakey(None)
 narrator = C("", "#ffffff")
-hero = C("Тестовый персонаж", "#ffcc00")
+rita = C("Рита", "#ff6699")
 
-bg("__random__")
-music("__random__", fade_in=2)
-
-narrator("Добро пожаловать в тестовый сценарий VN Engine v3.0!")
-
-sprite("hero", "__random__", "center")
-daytime("day")
-
-hero("Привет! Я демонстрирую возможности движка.")
-
-chapter("Глава 1", subtitle="Эффекты спрайтов")
-
-fx("hero", "shake", 0.5)
-hero("Эффект тряски!")
-
-fx("hero", "pulse", 1)
-hero("Пульсация!")
-
-fx("hero", "bounce")
-hero("Подпрыгивание!")
-
-fx("hero", "sway", 1.5)
-hero("Покачивание!")
-
-chapter("Глава 2", subtitle="Сцены и переходы", bg="#0a0a1a")
-
+bg("ext_beach_sunset.jpg", fade=1.5)
+music("confession.ogg", fade_in=2)
+ambient("ambient_lake_shore_evening.ogg", volume=0.4)
 daytime("sunset")
-narrator("Закат...")
 
-move("hero", "left", 0.8)
-hero("Я переместился влево.")
+wait(0.5)
+narrator("Добро пожаловать в VN Engine. Это тестовый сценарий.")
 
-move("hero", "right", 0.8)
-hero("А теперь вправо.")
+sprite("rita", "рита_весёлая_приветствует.png", "center")
+rita("Привет! Я Рита. Сейчас мы проверим основные возможности движка.")
 
-move("hero", "center", 0.5)
+chapter("Глава 1", subtitle="Эффекты и переходы", duration=2.5)
 
-screen("shake", 0.4)
-hero("Тряска всего экрана!")
+bg("ext_square_sunset.jpg", fade=1.0)
+daytime("sunset")
 
-daytime("night")
-narrator("Наступила ночь...")
+rita("Смотри на эффекты спрайтов!")
 
-bg_color("#0a0010", fade=1.5)
-narrator("Заливка фона цветом!")
+fx("rita", "shake", 0.5)
+rita("Тряска!")
 
-bg("__random__", fade=1.0)
-narrator("Вернули фон.")
+sprite("rita", "рита_весёлая_одна_рука_вверх.png", "center", transition=0.3)
+fx("rita", "bounce")
+rita("Подпрыгивание!")
 
-fullscreen_text("ГЛАВА 3\\n\\nПолноэкранный текст", duration=3.0, bg="#000000")
-
-fx("hero", "zoom", 1.3, 0.5)
-hero("Приближение к лицу!")
-
-fx("hero", "zoom", 1.0, 0.5)
-hero("Возврат.")
-
-set("test_flag", True)
-if_("test_flag"): hero("Флаги работают корректно!")
-
-add("points", 5)
-if_cmp("points", ">=", 3): hero("Условия тоже работают!")
+fx("rita", "sway", 1.5)
+sprite("rita", "рита_смущённая.png", "center", transition=0.4)
+rita("Покачивание... и смена эмоции.")
 
 screen("flash", 0.3)
 narrator("Вспышка!")
 
-choice("Продолжить демонстрацию", "cont", "Завершить тест", "end")
+screen("shake", 0.4)
+rita("Тряска экрана!")
 
-label("cont")
-fx("hero", "glow", 1.5)
-hero("Эффект свечения!")
-daytime("dawn")
-narrator("Рассвет...")
-jump("fin")
+chapter("Глава 2", subtitle="Сцены и выборы", duration=2.5)
 
-label("end")
-hero("Завершаем тестовый сценарий.")
-
-label("fin")
-fade_out("black", 1.5)
-daytime("day")
 clear(0.3)
-fade_in(1.5)
-narrator("Тест завершён. Спасибо за просмотр!")
+wait(0.4)
+
+bg("int_library_night.jpg", fade=1.0)
+music("mystery_girl.ogg", fade_in=2)
+ambient("ambient_library_day.ogg", volume=0.5)
+daytime("night")
+
+sprite("rita", "рита_хадумчивая_рука_у_подбородка.png", "center")
+rita("А теперь выбор. Куда пойдём?")
+
+choice("На пляж", "beach", "В столовую", "dining")
+
+label("beach")
+clear(0.3)
+wait(0.4)
+bg("ext_beach_night.jpg", fade=1.2)
+music("i_dont_blame_you.ogg", fade_in=2)
+ambient("ambient_lake_shore_night.ogg", volume=0.5)
+daytime("night")
+sprite("rita", "рита_влюблённая_забавно.png", "center")
+rita("Ночной пляж... красиво.")
+set("went_beach", True)
+jump("after_choice")
+
+label("dining")
+clear(0.3)
+wait(0.4)
+bg("int_dining_hall_night.jpg", fade=1.2)
+music("my_daily_life.ogg", fade_in=2)
+ambient("ambient_dining_hall_empty.ogg", volume=0.5)
+daytime("night")
+sprite("rita", "рита_весёлая_глаза_закрыла.png", "center")
+rita("В столовой тихо и уютно.")
+set("went_beach", False)
+jump("after_choice")
+
+label("after_choice")
+
+narrator("Флаги и условия:")
+if_("went_beach"): rita("Мы выбрали пляж — переменная работает!")
+
+fade_out("black", 1.5)
+wait(0.5)
+music(None)
+fade_in(1.0)
+
+fullscreen_text("КОНЕЦ\\n\\nСпасибо за просмотр!", duration=4.0, font_size="2em")
 `;
 
 // ============================================================
@@ -985,7 +963,6 @@ function fetchNoCache(url, options = {}) {
     });
 }
 
-// Простой дебаг-логгер (включается через VN.debug = true)
 const LOG = {
     _on: false,
     info:  (...a) => { if (LOG._on) console.log  ('[VN]', ...a); },
@@ -998,7 +975,7 @@ const LOG = {
 // ============================================================
 
 const Resources = {
-    data:   null,   // данные от /api/resources
+    data:   null,
     hasApi: false,
 
     async init() {
@@ -1029,24 +1006,22 @@ const Resources = {
         return str;
     },
 
-    // Путь к ресурсу с учётом мода
-    // modAssets — объект ресурсов мода (или null)
     resolveModPath(filename, category, modId, modAssets) {
         if (!filename) return null;
-
-        // Если путь начинается с assets/ — это собственный ресурс мода
         if (filename.startsWith('assets/') && modId) {
             return `scenarios/${modId}/${filename}`;
         }
-
-        // Если мод объявил свои ресурсы — ищем там
         if (modAssets && modAssets[category]) {
             const found = modAssets[category].find(f => f.endsWith('/' + filename) || f === filename);
             if (found) return `scenarios/${modId}/${found}`;
         }
-
-        // Иначе — глобальные папки
-        const prefix = { sprites: 'sprites/', bg: 'bg/', music: 'audio/music/', ambient: 'audio/ambient/', sfx: 'audio/sfx/' };
+        const prefix = {
+            sprites: 'sprites/',
+            bg:      'bg/',
+            music:   'audio/music/',
+            ambient: 'audio/ambient/',
+            sfx:     'audio/sfx/'
+        };
         return (prefix[category] || '') + filename;
     }
 };
@@ -1056,46 +1031,23 @@ const Resources = {
 // ============================================================
 
 const ModManager = {
-    mods: new Map(),    // id → объект мода
-
-    /*
-     * Объект мода:
-     * {
-     *   id:       string,
-     *   type:     'folder' | 'single-file',
-     *   manifest: object | null,
-     *   entryFile: string,        // 'main.py' или 'rita.py'
-     *   files:    string[],       // все py-файлы мода
-     *   assets:   { sprites, bg, music, ... } | {},
-     *   basePath: string,         // 'scenarios/rita/' или 'scenarios/'
-     *   custom:   { js, css } | {}
-     * }
-     */
+    mods: new Map(),
 
     async scanMods() {
         this.mods.clear();
-
         if (Resources.hasApi) {
             await this._scanLocal();
         } else {
             this._scanBrowser();
         }
-
         LOG.info('Модов найдено:', this.mods.size, [...this.mods.keys()]);
     },
 
-    // ── Локальный режим: смотрим на /api/resources и структуру путей ──
     async _scanLocal() {
-        const data = Resources.data;
-
-        // Сценарии возвращаются как пути вида:
-        //   "rita/main.py"         (папочный мод)
-        //   "legacy_story.py"      (одиночный файл)
+        const data      = Resources.data;
         const scenarios = data?.scenarios || [];
-
-        // Группируем по папке (первый сегмент пути)
-        const folders = new Map();   // folderName → [файлы]
-        const singles = [];
+        const folders   = new Map();
+        const singles   = [];
 
         for (const s of scenarios) {
             const slashIdx = s.indexOf('/');
@@ -1109,9 +1061,8 @@ const ModManager = {
             }
         }
 
-        // Папочные моды
         for (const [folder, files] of folders) {
-            const manifest = await this._tryLoadManifest(folder);
+            const manifest  = await this._tryLoadManifest(folder);
             const entryFile = manifest?.entry ?? (files.includes('main.py') ? 'main.py' : files[0]);
             const assets    = await this._scanModAssets(folder);
             this.mods.set(folder, {
@@ -1126,7 +1077,6 @@ const ModManager = {
             });
         }
 
-        // Одиночные файлы (legacy)
         for (const s of singles) {
             const id = s.replace(/\.py$/i, '');
             this.mods.set(id, {
@@ -1142,7 +1092,6 @@ const ModManager = {
         }
     },
 
-    // ── Браузерный режим: используем FALLBACKS.mods ──
     _scanBrowser() {
         for (const mod of FALLBACKS.mods) {
             this.mods.set(mod.id, {
@@ -1158,7 +1107,6 @@ const ModManager = {
         }
     },
 
-    // Пытаемся загрузить mod.json для папочного мода
     async _tryLoadManifest(modId) {
         try {
             const res = await fetchNoCache(`scenarios/${modId}/mod.json`);
@@ -1169,25 +1117,12 @@ const ModManager = {
         }
     },
 
-    // Сканируем ресурсы мода из данных API
-    // (ищем пути вида "scenarios/modId/assets/...")
     async _scanModAssets(modId) {
-        const data = Resources.data;
-        if (!data) return {};
-
-        const assets = { sprites: [], bg: [], music: [], ambient: [], sfx: [] };
-        // Не сканируем — ресурсы мода лежат в его папке и резолвятся через resolveModPath.
-        // Здесь можно расширить при необходимости.
-        return assets;
+        return { sprites: [], bg: [], music: [], ambient: [], sfx: [] };
     },
 
-    getModList() {
-        return [...this.mods.values()];
-    },
-
-    getMod(id) {
-        return this.mods.get(id) || null;
-    }
+    getModList() { return [...this.mods.values()]; },
+    getMod(id)   { return this.mods.get(id) || null; }
 };
 
 // ============================================================
@@ -1196,23 +1131,32 @@ const ModManager = {
 
 class ScenarioParser {
     constructor(modId = null) {
-        this.modId      = modId;     // для разрешения путей
+        this.modId      = modId;
         this.commands   = [];
         this.characters = {};
         this.customCSS  = [];
+        this.lineNum    = 0;
     }
 
     parse(code) {
         this.commands   = [];
         this.characters = {};
         this.customCSS  = [];
+        this.lineNum    = 0;
 
         const lines = code.trim().split('\n');
         for (let i = 0; i < lines.length; i++) {
+            this.lineNum = i + 1;
             const line = lines[i].trim();
             if (!line || line.startsWith('#')) continue;
-            try { this._parseLine(line); }
-            catch(e) { LOG.warn(`Строка ${i+1}: "${line}"`, e); }
+            try {
+                const matched = this._parseLine(line);
+                if (!matched && LOG._on) {
+                    LOG.warn(`Строка ${this.lineNum}: неизвестная команда "${line}"`);
+                }
+            } catch(e) {
+                LOG.warn(`Строка ${this.lineNum}: "${line}"`, e);
+            }
         }
 
         return {
@@ -1225,36 +1169,43 @@ class ScenarioParser {
     _parseLine(line) {
         let m;
 
-        // ── Определение персонажа ──
+        // Определение персонажа
         m = line.match(/^(\w+)\s*=\s*C\(\s*"([^"]*)"\s*,\s*"([^"]*)"\s*\)/);
         if (m) {
             this.characters[m[1]] = { name: m[2], color: m[3] };
             return true;
         }
 
-        // ── CSS ──
+        // css()
         m = line.match(/^css\(\s*"(.+?)"\s*\)/) || line.match(/^css\(\s*'(.+?)'\s*\)/);
-        if (m) { this.customCSS.push(m[1]); this.commands.push({ cmd: 'css', code: m[1] }); return true; }
+        if (m) {
+            this.customCSS.push(m[1]);
+            this.commands.push({ cmd: 'css', code: m[1], _line: this.lineNum });
+            return true;
+        }
 
-        // ── Кастомный эффект ──
+        // custom_fx()
         m = line.match(/^custom_fx\(\s*"([^"]+)"\s*,\s*"([^"]+)"(.*)?\)/);
         if (m) {
             const rest = m[3] || '', nums = this._nums(rest), named = this._named(rest);
-            this.commands.push({ cmd: 'custom_fx', target: m[1], animation: m[2],
+            this.commands.push({
+                cmd: 'custom_fx', target: m[1], animation: m[2],
                 duration: nums[0] ?? 1.0, timing: named.timing ?? 'ease',
-                iterations: named.iterations ?? 1, keep: named.keep ?? false });
+                iterations: named.iterations ?? 1, keep: named.keep ?? false,
+                _line: this.lineNum
+            });
             return true;
         }
 
-        // ── Кастомный хук ──
+        // custom_hook()
         m = line.match(/^custom_hook\(\s*"(\w+)"\s*,\s*"([^"]+)"(.*)\)/);
         if (m) {
             const args = this._strs(m[3]);
-            this.commands.push({ cmd: 'custom_hook', type: m[1], func: m[2], args });
+            this.commands.push({ cmd: 'custom_hook', type: m[1], func: m[2], args, _line: this.lineNum });
             return true;
         }
 
-        // ── chapter() ──
+        // chapter()
         m = line.match(/^chapter\(\s*"([^"]+)"(.*)\)/);
         if (m) {
             const named = this._named(m[2] || '');
@@ -1263,13 +1214,14 @@ class ScenarioParser {
                 cmd:      'chapter',
                 title:    m[1],
                 subtitle: named.subtitle ?? strs[0] ?? '',
-                bg:       named.bg   ?? null,
-                duration: named.duration ?? 2.8
+                bg:       named.bg       ?? null,
+                duration: named.duration ?? 2.8,
+                _line:    this.lineNum
             });
             return true;
         }
 
-        // ── scene() ──
+        // scene()
         m = line.match(/^scene\(\s*"([^"]+)"(.*)\)/);
         if (m) {
             const named = this._named(m[2] || '');
@@ -1280,19 +1232,20 @@ class ScenarioParser {
                 music:   named.music   ?? null,
                 ambient: named.ambient ?? null,
                 daytime: named.daytime ?? null,
-                fade:    named.fade    ?? 1.0
+                fade:    named.fade    ?? 1.0,
+                _line:   this.lineNum
             });
             return true;
         }
 
-        // ── bg_color() ──
+        // bg_color()
         m = line.match(/^bg_color\(\s*"([^"]+)"(?:\s*,\s*fade\s*=\s*([\d.]+))?\s*\)/);
         if (m) {
-            this.commands.push({ cmd: 'bg_color', color: m[1], fade: parseFloat(m[2] ?? '0.8') });
+            this.commands.push({ cmd: 'bg_color', color: m[1], fade: parseFloat(m[2] ?? '0.8'), _line: this.lineNum });
             return true;
         }
 
-        // ── fullscreen_text() ──
+        // fullscreen_text()
         m = line.match(/^fullscreen_text\(\s*"(.+?)"(.*)\)/);
         if (m) {
             const named = this._named(m[2] || '');
@@ -1302,210 +1255,217 @@ class ScenarioParser {
                 duration: named.duration  ?? 3.0,
                 bg:       named.bg        ?? '#000000',
                 color:    named.color     ?? '#ffffff',
-                fontSize: named.font_size ?? '2em'
+                fontSize: named.font_size ?? '2em',
+                _line:    this.lineNum
             });
             return true;
         }
 
-        // ── include() ──
+        // include()
         m = line.match(/^include\(\s*"([^"]+)"\s*\)/);
-        if (m) { this.commands.push({ cmd: 'include', file: m[1] }); return true; }
+        if (m) { this.commands.push({ cmd: 'include', file: m[1], _line: this.lineNum }); return true; }
 
-        // ── call() ──
+        // call()
         m = line.match(/^call\(\s*"([^"]+)"\s*(?:,\s*"([^"]+)")?\s*\)/);
-        if (m) { this.commands.push({ cmd: 'call', file: m[1], label: m[2] ?? null }); return true; }
+        if (m) { this.commands.push({ cmd: 'call', file: m[1], label: m[2] ?? null, _line: this.lineNum }); return true; }
 
-        // ── return_from_call() ──
+        // return_from_call()
         if (/^return_from_call\(\s*\)/.test(line)) {
-            this.commands.push({ cmd: 'return_from_call' }); return true;
+            this.commands.push({ cmd: 'return_from_call', _line: this.lineNum }); return true;
         }
 
-        // ── clear() ──
+        // clear()
         m = line.match(/^clear\(\s*([\d.]+)?\s*\)/);
-        if (m) { this.commands.push({ cmd: 'clear', fade: parseFloat(m[1] ?? '0.3') }); return true; }
+        if (m) { this.commands.push({ cmd: 'clear', fade: parseFloat(m[1] ?? '0.3'), _line: this.lineNum }); return true; }
 
-        // ── bg() ──
+        // bg()
         m = line.match(/^bg\(\s*"([^"]+)"(?:\s*,\s*fade\s*=\s*([\d.]+))?\s*\)/);
         if (m) {
             this.commands.push({
                 cmd:  'bg',
                 file: Resources.resolve(m[1], 'bg'),
-                fade: parseFloat(m[2] ?? '0.8')
+                fade: parseFloat(m[2] ?? '0.8'),
+                _line: this.lineNum
             });
             return true;
         }
 
-        // ── fade_out() ──
+        // fade_out()
         m = line.match(/^fade_out\(\s*"?([^",]*)"?\s*(?:,\s*([\d.]+))?\s*\)/);
         if (m) {
-            this.commands.push({ cmd: 'fade_out', color: m[1].trim() || 'black', dur: parseFloat(m[2] ?? '0.6') });
+            this.commands.push({ cmd: 'fade_out', color: m[1].trim() || 'black', dur: parseFloat(m[2] ?? '0.6'), _line: this.lineNum });
             return true;
         }
 
-        // ── fade_in() ──
+        // fade_in()
         m = line.match(/^fade_in\(\s*([\d.]+)?\s*\)/);
-        if (m) { this.commands.push({ cmd: 'fade_in', dur: parseFloat(m[1] ?? '0.6') }); return true; }
+        if (m) { this.commands.push({ cmd: 'fade_in', dur: parseFloat(m[1] ?? '0.6'), _line: this.lineNum }); return true; }
 
-        // ── wait() ──
+        // wait()
         m = line.match(/^wait\(\s*([\d.]+)\s*\)/);
-        if (m) { this.commands.push({ cmd: 'wait', dur: parseFloat(m[1]) }); return true; }
+        if (m) { this.commands.push({ cmd: 'wait', dur: parseFloat(m[1]), _line: this.lineNum }); return true; }
 
-        // ── music() ──
+        // music()
         m = line.match(/^music\(([^)]*)\)/);
         if (m) {
             const args = m[1].trim();
             if (args === 'None' || args === '') {
-                this.commands.push({ cmd: 'music', file: null });
+                this.commands.push({ cmd: 'music', file: null, _line: this.lineNum });
             } else {
                 const strs = this._strs(args), named = this._named(args);
                 this.commands.push({
                     cmd: 'music', file: Resources.resolve(strs[0], 'music'),
                     fade_in: named.fade_in ?? 0, fade_out: named.fade_out ?? 0,
-                    start: named.start ?? 0, volume: named.volume ?? 1.0
+                    start: named.start ?? 0, volume: named.volume ?? 1.0,
+                    _line: this.lineNum
                 });
             }
             return true;
         }
 
-        // ── ambient() ──
+        // ambient()
         m = line.match(/^ambient\(([^)]*)\)/);
         if (m) {
             const args = m[1].trim();
             if (args === 'None' || args === '') {
-                this.commands.push({ cmd: 'ambient', file: null });
+                this.commands.push({ cmd: 'ambient', file: null, _line: this.lineNum });
             } else {
                 const strs = this._strs(args), named = this._named(args);
                 this.commands.push({
                     cmd: 'ambient', file: Resources.resolve(strs[0], 'ambient'),
-                    volume: named.volume ?? 1.0
+                    volume: named.volume ?? 1.0,
+                    _line: this.lineNum
                 });
             }
             return true;
         }
 
-        // ── sfx() ──
+        // sfx()
         m = line.match(/^sfx\(\s*"([^"]+)"(?:\s*,\s*volume\s*=\s*([\d.]+))?\s*\)/);
         if (m) {
-            this.commands.push({ cmd: 'sfx', file: Resources.resolve(m[1], 'sfx'), volume: parseFloat(m[2] ?? '1.0') });
+            this.commands.push({ cmd: 'sfx', file: Resources.resolve(m[1], 'sfx'), volume: parseFloat(m[2] ?? '1.0'), _line: this.lineNum });
             return true;
         }
 
-        // ── sprite() ──
+        // sprite()
         m = line.match(/^sprite\(\s*"([^"]+)"\s*,\s*"([^"]+)"(?:\s*,\s*"?([^",)]+)"?)?(.*)?\)/);
         if (m) {
             const rest = m[4] || '', named = this._named(rest);
             this.commands.push({
                 cmd: 'sprite', id: m[1], file: Resources.resolve(m[2], 'sprites'),
                 pos: m[3] ? m[3].trim() : null,
-                zoom: named.zoom ?? 1.0, flip: named.flip ?? false, transition: named.transition ?? 0
+                zoom: named.zoom ?? 1.0, flip: named.flip ?? false, transition: named.transition ?? 0,
+                _line: this.lineNum
             });
             return true;
         }
 
-        // ── show() ──
+        // show()
         m = line.match(/^show\(\s*"([^"]+)"\s*,\s*"?([^",)]+)"?(.*)?\)/);
         if (m) {
             const rest = m[3] || '', named = this._named(rest);
             this.commands.push({
                 cmd: 'show', sprite: Resources.resolve(m[1], 'sprites'),
                 pos: m[2].trim(),
-                zoom: named.zoom ?? 1.0, flip: named.flip ?? false, transition: named.transition ?? 0
+                zoom: named.zoom ?? 1.0, flip: named.flip ?? false, transition: named.transition ?? 0,
+                _line: this.lineNum
             });
             return true;
         }
 
-        // ── hide() ──
+        // hide()
         m = line.match(/^hide\(\s*"([^"]+)"(?:\s*,\s*fade\s*=\s*([\d.]+))?\s*\)/);
-        if (m) { this.commands.push({ cmd: 'hide', target: m[1], fade: parseFloat(m[2] ?? '0.3') }); return true; }
+        if (m) { this.commands.push({ cmd: 'hide', target: m[1], fade: parseFloat(m[2] ?? '0.3'), _line: this.lineNum }); return true; }
 
-        // ── move() ──
+        // move()
         m = line.match(/^move\(\s*"([^"]+)"\s*,\s*"?([^",)]+)"?\s*,\s*([\d.]+)\s*\)/);
-        if (m) { this.commands.push({ cmd: 'move', target: m[1], pos: m[2].trim(), dur: parseFloat(m[3]) }); return true; }
+        if (m) { this.commands.push({ cmd: 'move', target: m[1], pos: m[2].trim(), dur: parseFloat(m[3]), _line: this.lineNum }); return true; }
 
-        // ── fx() ──
+        // fx()
         m = line.match(/^fx\(\s*"([^"]+)"\s*,\s*"(\w+)"(.*)?\)/);
         if (m) {
             const nums = this._nums(m[3] || '');
-            this.commands.push({ cmd: 'fx', target: m[1], effect: m[2], param1: nums[0] ?? 0.5, param2: nums[1] ?? null });
+            this.commands.push({ cmd: 'fx', target: m[1], effect: m[2], param1: nums[0] ?? 0.5, param2: nums[1] ?? null, _line: this.lineNum });
             return true;
         }
 
-        // ── daytime() ──
+        // daytime()
         m = line.match(/^daytime\(\s*"(\w+)"\s*\)/);
-        if (m) { this.commands.push({ cmd: 'daytime', time: m[1] }); return true; }
+        if (m) { this.commands.push({ cmd: 'daytime', time: m[1], _line: this.lineNum }); return true; }
 
-        // ── screen() ──
+        // screen()
         m = line.match(/^screen\(\s*"(\w+)"(.*)?\)/);
         if (m) {
             const nums = this._nums(m[2] || '');
-            this.commands.push({ cmd: 'screen', effect: m[1], dur: nums[0] ?? 0.5 });
+            this.commands.push({ cmd: 'screen', effect: m[1], dur: nums[0] ?? 0.5, _line: this.lineNum });
             return true;
         }
 
-        // ── chromakey() ──
+        // chromakey()
         m = line.match(/^chromakey\(([^)]*)\)/);
         if (m) {
             const arg = m[1].trim();
             if (arg === 'None' || arg === '') {
-                this.commands.push({ cmd: 'chromakey', color: null });
+                this.commands.push({ cmd: 'chromakey', color: null, _line: this.lineNum });
             } else {
                 const strs = this._strs(arg), named = this._named(arg);
-                this.commands.push({ cmd: 'chromakey', color: strs[0] ?? null, tolerance: named.tolerance ?? 30 });
+                this.commands.push({ cmd: 'chromakey', color: strs[0] ?? null, tolerance: named.tolerance ?? 30, _line: this.lineNum });
             }
             return true;
         }
 
-        // ── label() ──
+        // label()
         m = line.match(/^label\(\s*"(\w+)"\s*\)/);
-        if (m) { this.commands.push({ cmd: 'label', name: m[1] }); return true; }
+        if (m) { this.commands.push({ cmd: 'label', name: m[1], _line: this.lineNum }); return true; }
 
-        // ── jump() ──
+        // jump()
         m = line.match(/^jump\(\s*"(\w+)"\s*\)/);
-        if (m) { this.commands.push({ cmd: 'jump', target: m[1] }); return true; }
+        if (m) { this.commands.push({ cmd: 'jump', target: m[1], _line: this.lineNum }); return true; }
 
-        // ── set() ──
+        // set()
         m = line.match(/^set\(\s*"(\w+)"\s*,\s*(.+)\s*\)/);
-        if (m) { this.commands.push({ cmd: 'set', var: m[1], val: this._val(m[2].trim()) }); return true; }
+        if (m) { this.commands.push({ cmd: 'set', var: m[1], val: this._val(m[2].trim()), _line: this.lineNum }); return true; }
 
-        // ── add() ──
+        // add()
         m = line.match(/^add\(\s*"(\w+)"\s*,\s*(-?[\d.]+)\s*\)/);
-        if (m) { this.commands.push({ cmd: 'add', var: m[1], val: parseFloat(m[2]) }); return true; }
+        if (m) { this.commands.push({ cmd: 'add', var: m[1], val: parseFloat(m[2]), _line: this.lineNum }); return true; }
 
-        // ── if_() ──
+        // if_()
         m = line.match(/^if_\(\s*"(\w+)"\s*\):\s*(.+)/);
         if (m) {
             const sub = new ScenarioParser(this.modId);
-            this.commands.push({ cmd: 'if', var: m[1], then: sub.parse(m[2].trim()).commands });
+            this.commands.push({ cmd: 'if', var: m[1], then: sub.parse(m[2].trim()).commands, _line: this.lineNum });
             return true;
         }
 
-        // ── if_cmp() ──
+        // if_cmp()
         m = line.match(/^if_cmp\(\s*"(\w+)"\s*,\s*"([<>=!]+)"\s*,\s*(-?[\d.]+)\s*\):\s*(.+)/);
         if (m) {
             const sub = new ScenarioParser(this.modId);
             this.commands.push({
                 cmd: 'if_cmp', var: m[1], op: m[2],
                 val: parseFloat(m[3]),
-                then: sub.parse(m[4].trim()).commands
+                then: sub.parse(m[4].trim()).commands,
+                _line: this.lineNum
             });
             return true;
         }
 
-        // ── choice() ──
+        // choice()
         m = line.match(/^choice\((.+)\)/);
         if (m) {
             const args = this._strs(m[1]), options = [];
             for (let j = 0; j + 1 < args.length; j += 2)
                 options.push({ text: args[j], target: args[j+1] });
-            this.commands.push({ cmd: 'choice', options });
+            this.commands.push({ cmd: 'choice', options, _line: this.lineNum });
             return true;
         }
 
-        // ── Реплика персонажа ──
+        // Реплика персонажа
         m = line.match(/^(\w+)\(\s*"(.*)"\s*\)/);
         if (m && this.characters[m[1]]) {
             const ch = this.characters[m[1]];
-            this.commands.push({ cmd: 'say', name: ch.name, color: ch.color, text: m[2] });
+            this.commands.push({ cmd: 'say', name: ch.name, color: ch.color, text: m[2], _line: this.lineNum });
             return true;
         }
 
@@ -1513,7 +1473,7 @@ class ScenarioParser {
     }
 
     _strs(s)  { return Array.from(s.matchAll(/"([^"]*)"/g), m => m[1]); }
-    _nums(s)  { return Array.from(s.matchAll(/-?[\d.]+/g), m => parseFloat(m[0])); }
+    _nums(s)  { return Array.from(s.matchAll(/-?[\d.]+/g),  m => parseFloat(m[0])); }
     _named(s) {
         const r = {};
         for (const m of s.matchAll(/(\w+)\s*=\s*([^,)]+)/g)) r[m[1]] = this._val(m[2].trim());
@@ -1528,12 +1488,34 @@ class ScenarioParser {
         return isNaN(n) ? s : n;
     }
 }
+</script>
+<script>
+'use strict';
 
 // ============================================================
 // VN ENGINE
 // ============================================================
 
 const VN = {
+    // ── Версия ──
+    version: '3.1.0',
+    debug:   false,
+
+    // ── Session Management ──
+    currentSessionId:    0,
+    _activeTimers:       new Set(),
+    _activeIntervals:    new Set(),
+    _activeAnimations:   new Map(),
+    _audioFadeIntervals: new Set(),
+
+    // ── UI State ──
+    // Возможные значения: 'hidden' | 'typing' | 'waiting' | 'choice' | 'transition'
+    uiState: 'hidden',
+
+    // ── Защита от двойных кликов ──
+    _lastClickTime: 0,
+    _clickCooldown: 50,
+
     // ── Состояние выполнения ──
     commands:  [],
     cmdIndex:  0,
@@ -1541,13 +1523,20 @@ const VN = {
     isPaused:  false,
 
     // ── Контекст мода ──
-    currentModId:  null,      // id текущего мода
-    currentMod:    null,      // объект мода
-    modContexts:   new Map(), // modId → context
-    callStack:     [],        // для call/return
+    currentModId: null,
+    currentMod:   null,
+    modContexts:  new Map(),
+    callStack:    [],
 
-    // ── Изолированный контекст мода ──
-    // (getContext() всегда возвращает правильный объект)
+    // ── Защита от переполнения стека вызовов ──
+    maxCallDepth: 10,
+
+    // ── Защита от зацикливания ──
+    _jumpHistory:    [],
+    _maxJumpCount:   500,
+
+    // ── Защита от повторного включения файлов ──
+    _includedFiles: new Set(),
 
     // ── Аудио ──
     currentMusic:   null,
@@ -1558,29 +1547,31 @@ const VN = {
     chromakeyTolerance: 30,
 
     // ── Типинг ──
-    isTyping:       false,
-    typeAnimationId: null,
-    fullText:       '',
+    isTyping:         false,
+    typeAnimationId:  null,
+    fullText:         '',
     currentTextIndex: 0,
-    waitingForClick: false,
+    waitingForClick:  false,
 
     // ── Настройки ──
     settings: { volMusic: 40, volAmbient: 40, volSfx: 40, textSpeed: 90 },
 
-    // ── Кэш ──
-    imageCache: {},
+    // ── LRU-кэш изображений ──
+    imageCache:         {},
+    imageCacheMaxSize:  80,
+    _imageCacheLRU:     [],
 
-    // ── DOM ──
+    // ── DOM-ссылки ──
     dom: {},
 
-    // ── Кастомные стили (hash → true) ──
+    // ── Кастомные стили ──
     customStylesAdded: new Set(),
 
-    // ── Отслеживание DOM-элементов оверлеев (для очистки) ──
+    // ── Отслеживание временных DOM-оверлеев ──
     _overlayElements: [],
 
-    // ── Кастомные JS-хуки модов ──
-    // window.ModHooks[modId][funcName]
+    // ── Таймер ресайза ──
+    _resizeTimeout: null,
 
     // ============================================================
     // ИНИЦИАЛИЗАЦИЯ
@@ -1623,18 +1614,212 @@ const VN = {
         this.loadSettings();
         this._setupSliders();
         this._setupEventListeners();
+        this._setupResizeHandler();
 
         await Resources.init();
         await this._initMenu();
+
+        LOG.info('VN Engine v' + this.version + ' initialized');
     },
 
-    // ── Получение изолированного контекста мода ──
+    // ============================================================
+    // SESSION MANAGEMENT
+    // ============================================================
+
+    _scheduleTimeout(fn, delay, sessionId) {
+        const tid = setTimeout(() => {
+            this._activeTimers.delete(tid);
+            if (this.currentSessionId !== sessionId) return;
+            fn();
+        }, delay);
+        this._activeTimers.add(tid);
+        return tid;
+    },
+
+    _scheduleInterval(fn, delay, sessionId) {
+        const iid = setInterval(() => {
+            if (this.currentSessionId !== sessionId) {
+                clearInterval(iid);
+                this._activeIntervals.delete(iid);
+                return;
+            }
+            fn();
+        }, delay);
+        this._activeIntervals.add(iid);
+        return iid;
+    },
+
+    _killCurrentSession() {
+        ++this.currentSessionId;
+
+        this._activeTimers.forEach(tid => clearTimeout(tid));
+        this._activeTimers.clear();
+
+        this._activeIntervals.forEach(iid => clearInterval(iid));
+        this._activeIntervals.clear();
+
+        this._stopAllAnimations();
+        this._stopAllAudio();
+        this._setUIState('hidden');
+        this._resetDOMState();
+
+        LOG.info('Session killed, new id:', this.currentSessionId);
+    },
+
+    _stopAllAnimations() {
+        this._activeAnimations.forEach((state, el) => {
+            if (el && el.style) el.style.animation = '';
+        });
+        this._activeAnimations.clear();
+    },
+
+    _stopAllAudio() {
+        this._audioFadeIntervals.forEach(iid => clearInterval(iid));
+        this._audioFadeIntervals.clear();
+
+        if (this.currentMusic) {
+            try {
+                this.currentMusic.pause();
+                this.currentMusic.currentTime = 0;
+                this.currentMusic.src = '';
+                this.currentMusic.load();
+            } catch(e) {}
+            this.currentMusic = null;
+        }
+
+        if (this.currentAmbient) {
+            try {
+                this.currentAmbient.pause();
+                this.currentAmbient.currentTime = 0;
+                this.currentAmbient.src = '';
+                this.currentAmbient.load();
+            } catch(e) {}
+            this.currentAmbient = null;
+        }
+    },
+
+    _resetDOMState() {
+        this.dom.bgCurrent.style.backgroundImage = '';
+        this.dom.bgCurrent.style.background      = '';
+        this.dom.bgCurrent.style.transition      = '';
+        this.dom.bgNext.style.backgroundImage    = '';
+        this.dom.bgNext.style.opacity            = '0';
+        this.dom.bgNext.style.transition         = 'none';
+        this.dom.daytimeOverlay.style.background = '';
+        this.dom.fadeOverlay.style.opacity       = '0';
+        this.dom.fadeOverlay.style.transition    = '';
+        this.dom.flashOverlay.style.opacity      = '0';
+        this.dom.spritesLayer.innerHTML          = '';
+        this.dom.speaker.textContent             = '';
+        this.dom.dialogue.textContent            = '';
+        this.dom.choiceContainer.innerHTML       = '';
+        this.dom.choiceContainer.classList.remove('visible');
+        this.dom.chapterOverlay.classList.remove('visible');
+        this.dom.chapterOverlay.style.background = '';
+        this.dom.fsTextOverlay.classList.remove('visible');
+        this.dom.game.style.animation            = '';
+
+        this._overlayElements.forEach(el => { try { el.remove(); } catch(e) {} });
+        this._overlayElements = [];
+    },
+
+    // ============================================================
+    // UI STATE MANAGEMENT
+    // ============================================================
+
+    _setUIState(newState) {
+        this.uiState = newState;
+
+        switch (newState) {
+            case 'hidden':
+                this.dom.textbox.classList.remove('visible');
+                this.dom.continueIndicator.classList.remove('visible');
+                this.dom.clickArea.classList.remove('active');
+                this.dom.choiceContainer.classList.remove('visible');
+                break;
+
+            case 'typing':
+                this.dom.textbox.classList.add('visible');
+                this.dom.continueIndicator.classList.remove('visible');
+                this.dom.clickArea.classList.add('active');
+                this.dom.choiceContainer.classList.remove('visible');
+                break;
+
+            case 'waiting':
+                this.dom.textbox.classList.add('visible');
+                this.dom.continueIndicator.classList.add('visible');
+                this.dom.clickArea.classList.add('active');
+                this.dom.choiceContainer.classList.remove('visible');
+                break;
+
+            case 'choice':
+                this.dom.textbox.classList.remove('visible');
+                this.dom.continueIndicator.classList.remove('visible');
+                this.dom.clickArea.classList.remove('active');
+                this.dom.choiceContainer.classList.add('visible');
+                break;
+
+            case 'transition':
+                this.dom.textbox.classList.remove('visible');
+                this.dom.continueIndicator.classList.remove('visible');
+                this.dom.clickArea.classList.remove('active');
+                break;
+        }
+    },
+
+    // ============================================================
+    // RESIZE HANDLER
+    // ============================================================
+
+    _setupResizeHandler() {
+        window.addEventListener('resize', () => {
+            clearTimeout(this._resizeTimeout);
+            this._resizeTimeout = setTimeout(() => this._handleResize(), 150);
+        });
+    },
+
+    _handleResize() {
+        // Принудительный пересчёт background-size при изменении размера окна
+        [this.dom.bgCurrent, this.dom.bgNext].forEach(el => {
+            const img = el.style.backgroundImage;
+            if (img && img !== 'none' && img !== '') {
+                el.style.backgroundSize = 'contain';
+                void el.offsetHeight;
+                el.style.backgroundSize = 'cover';
+            }
+        });
+    },
+
+    // ============================================================
+    // LRU IMAGE CACHE
+    // ============================================================
+
+    _addToImageCache(key, img) {
+        this.imageCache[key] = img;
+
+        const idx = this._imageCacheLRU.indexOf(key);
+        if (idx !== -1) this._imageCacheLRU.splice(idx, 1);
+        this._imageCacheLRU.push(key);
+
+        while (this._imageCacheLRU.length > this.imageCacheMaxSize) {
+            const oldKey = this._imageCacheLRU.shift();
+            const oldImg = this.imageCache[oldKey];
+            if (oldImg) {
+                oldImg.onload  = null;
+                oldImg.onerror = null;
+                oldImg.src     = '';
+            }
+            delete this.imageCache[oldKey];
+        }
+    },
+
+    // ============================================================
+    // КОНТЕКСТ МОДА
+    // ============================================================
+
     getContext() {
         const id = this.currentModId;
-        if (!id) {
-            // Legacy: используем сам VN как контекст (как в v1)
-            return this;
-        }
+        if (!id) return this;
         if (!this.modContexts.has(id)) {
             this.modContexts.set(id, {
                 variables:     {},
@@ -1647,7 +1832,7 @@ const VN = {
     },
 
     // ============================================================
-    // НАСТРОЙКИ И СЛАЙДЕРЫ
+    // НАСТРОЙКИ
     // ============================================================
 
     loadSettings() {
@@ -1665,42 +1850,47 @@ const VN = {
 
     _syncSliders() {
         const s = this.settings;
-        document.getElementById('opt-music').value    = s.volMusic;
-        document.getElementById('opt-ambient').value  = s.volAmbient;
-        document.getElementById('opt-sfx').value      = s.volSfx;
-        document.getElementById('opt-speed').value    = s.textSpeed;
-        document.getElementById('popt-music').value   = s.volMusic;
-        document.getElementById('popt-ambient').value = s.volAmbient;
-        document.getElementById('popt-sfx').value     = s.volSfx;
-        document.getElementById('popt-speed').value   = s.textSpeed;
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        set('opt-music',    s.volMusic);
+        set('opt-ambient',  s.volAmbient);
+        set('opt-sfx',      s.volSfx);
+        set('opt-speed',    s.textSpeed);
+        set('popt-music',   s.volMusic);
+        set('popt-ambient', s.volAmbient);
+        set('popt-sfx',     s.volSfx);
+        set('popt-speed',   s.textSpeed);
     },
 
     _updateLabels() {
         const s = this.settings;
-        document.getElementById('opt-music-val').textContent    = s.volMusic   + '%';
-        document.getElementById('opt-ambient-val').textContent  = s.volAmbient + '%';
-        document.getElementById('opt-sfx-val').textContent      = s.volSfx     + '%';
-        document.getElementById('opt-speed-val').textContent    = s.textSpeed  + '%';
-        document.getElementById('popt-music-val').textContent   = s.volMusic   + '%';
-        document.getElementById('popt-ambient-val').textContent = s.volAmbient + '%';
-        document.getElementById('popt-sfx-val').textContent     = s.volSfx     + '%';
-        document.getElementById('popt-speed-val').textContent   = s.textSpeed  + '%';
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val + '%'; };
+        set('opt-music-val',    s.volMusic);
+        set('opt-ambient-val',  s.volAmbient);
+        set('opt-sfx-val',      s.volSfx);
+        set('opt-speed-val',    s.textSpeed);
+        set('popt-music-val',   s.volMusic);
+        set('popt-ambient-val', s.volAmbient);
+        set('popt-sfx-val',     s.volSfx);
+        set('popt-speed-val',   s.textSpeed);
 
         if (this.currentMusic)   this.currentMusic.volume   = s.volMusic   / 100;
         if (this.currentAmbient) this.currentAmbient.volume = s.volAmbient / 100;
     },
 
     _setupSliders() {
-        // Главное меню
-        const map = {
+        // Главное меню: настройки
+        const mainMap = {
             'opt-music':   'volMusic',
             'opt-ambient': 'volAmbient',
             'opt-sfx':     'volSfx',
             'opt-speed':   'textSpeed'
         };
-        Object.entries(map).forEach(([id, key]) => {
-            document.getElementById(id)?.addEventListener('input', e => {
+        Object.entries(mainMap).forEach(([id, key]) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', e => {
                 this.settings[key] = parseInt(e.target.value);
+                // Синхронизируем зеркальный слайдер в паузе
                 const mirror = document.getElementById('p' + id);
                 if (mirror) mirror.value = this.settings[key];
                 this._updateLabels();
@@ -1708,16 +1898,19 @@ const VN = {
             });
         });
 
-        // Пауза
-        const pmap = {
+        // Пауза: настройки
+        const pauseMap = {
             'popt-music':   'volMusic',
             'popt-ambient': 'volAmbient',
             'popt-sfx':     'volSfx',
             'popt-speed':   'textSpeed'
         };
-        Object.entries(pmap).forEach(([id, key]) => {
-            document.getElementById(id)?.addEventListener('input', e => {
+        Object.entries(pauseMap).forEach(([id, key]) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', e => {
                 this.settings[key] = parseInt(e.target.value);
+                // Синхронизируем зеркальный слайдер в главном меню
                 const mirror = document.getElementById(id.replace('popt-', 'opt-'));
                 if (mirror) mirror.value = this.settings[key];
                 this._updateLabels();
@@ -1731,18 +1924,25 @@ const VN = {
     // ============================================================
 
     _setupEventListeners() {
-        this.dom.clickArea.addEventListener('click', e => { e.preventDefault(); this.handleAdvance(); });
-        this.dom.textbox.addEventListener('click',   e => { e.preventDefault(); this.handleAdvance(); });
+        this.dom.clickArea.addEventListener('click', e => {
+            e.preventDefault();
+            this.handleAdvance();
+        });
+        this.dom.textbox.addEventListener('click', e => {
+            e.preventDefault();
+            this.handleAdvance();
+        });
 
         document.addEventListener('keydown', e => {
             if (e.code === 'Escape') {
                 e.preventDefault();
                 if (this.isRunning) {
                     if (this.isPaused) {
-                        if (this.dom.pauseOptionsPanel.classList.contains('active'))
+                        if (this.dom.pauseOptionsPanel.classList.contains('active')) {
                             this.pauseHideOptions();
-                        else
+                        } else {
                             this.resumeGame();
+                        }
                     } else {
                         this.pauseGame();
                     }
@@ -1758,11 +1958,19 @@ const VN = {
 
     handleAdvance() {
         if (!this.isRunning || this.isPaused) return;
-        if (this.isTyping)           this._finishTyping();
-        else if (this.waitingForClick) {
+
+        // Дебаунс от двойных кликов
+        const now = performance.now();
+        if (now - this._lastClickTime < this._clickCooldown) return;
+        this._lastClickTime = now;
+
+        this.dom.continueIndicator.classList.remove('visible');
+
+        if (this.isTyping) {
+            this._finishTyping();
+        } else if (this.waitingForClick) {
             this.waitingForClick = false;
-            this.dom.continueIndicator.classList.remove('visible');
-            this._executeNext();
+            requestAnimationFrame(() => this._executeNext());
         }
     },
 
@@ -1773,6 +1981,7 @@ const VN = {
     pauseGame() {
         if (!this.isRunning || this.isPaused) return;
         this.isPaused = true;
+        // Заглушаем аудио на время паузы
         if (this.currentMusic)   this.currentMusic.volume   = 0;
         if (this.currentAmbient) this.currentAmbient.volume = 0;
         this.dom.clickArea.classList.remove('active');
@@ -1784,41 +1993,61 @@ const VN = {
         this.isPaused = false;
         this.dom.pauseOptionsPanel.classList.remove('active');
         this.dom.pauseMenu.classList.remove('visible');
+        // Восстанавливаем громкость
         if (this.currentMusic)   this.currentMusic.volume   = this.settings.volMusic   / 100;
         if (this.currentAmbient) this.currentAmbient.volume = this.settings.volAmbient / 100;
+        // Возобновляем управление кликами, если ждём
         if (this.waitingForClick) this.dom.clickArea.classList.add('active');
     },
 
-    pauseShowOptions() { this._syncSliders(); this.dom.pauseOptionsPanel.classList.add('active'); },
-    pauseHideOptions() { this.dom.pauseOptionsPanel.classList.remove('active'); },
+    pauseShowOptions() {
+        this._syncSliders();
+        this.dom.pauseOptionsPanel.classList.add('active');
+    },
 
-    showOptions()  { this.dom.optionsPanel.classList.add('active'); },
-    hideOptions()  { this.dom.optionsPanel.classList.remove('active'); },
+    pauseHideOptions() {
+        this.dom.pauseOptionsPanel.classList.remove('active');
+    },
+
+    showOptions() {
+        this._syncSliders();
+        this.dom.optionsPanel.classList.add('active');
+    },
+
+    hideOptions() {
+        this.dom.optionsPanel.classList.remove('active');
+    },
 
     // ============================================================
     // ГЛАВНОЕ МЕНЮ
     // ============================================================
 
     async _initMenu() {
+        // Выбираем фон для меню
         const bg = Resources.hasApi
             ? (Resources.data?.bg?.find(b => b.includes('bus_stop')) || Resources.getRandom('bg'))
             : FALLBACKS.menuBg;
 
-        if (bg) this.dom.menuBg.style.backgroundImage = `url('bg/${bg}?_t=${Date.now()}')`;
+        if (bg) {
+            this.dom.menuBg.style.backgroundImage = `url('bg/${bg}?_t=${Date.now()}')`;
+        }
 
+        // Запускаем музыку меню, если ещё не играет ничего
         if (!this.isRunning && !this.currentMusic) {
             const menuMusic = Resources.hasApi
                 ? (Resources.data?.music?.find(m => m.includes('blow_with_the_fires')) || Resources.getRandom('music'))
                 : FALLBACKS.menuMusic;
 
             if (menuMusic) {
-                const audio = new Audio('audio/music/' + menuMusic + '?_t=' + Date.now());
+                const audio  = new Audio('audio/music/' + menuMusic + '?_t=' + Date.now());
                 audio.loop   = true;
                 audio.volume = this.settings.volMusic / 100;
                 this.currentMusic = audio;
+                // Автовоспроизведение только после первого пользовательского жеста
                 document.body.addEventListener('click', () => {
-                    if (this.currentMusic?.paused && !this.isRunning)
+                    if (this.currentMusic?.paused && !this.isRunning) {
                         this.currentMusic.play().catch(() => {});
+                    }
                 }, { once: true });
             }
         }
@@ -1827,7 +2056,7 @@ const VN = {
     async showScenarios() {
         await ModManager.scanMods();
         const mods = ModManager.getModList();
-        const c = this.dom.scenariosContainer;
+        const c    = this.dom.scenariosContainer;
         c.innerHTML = '';
 
         if (mods.length === 0) {
@@ -1839,8 +2068,8 @@ const VN = {
 
                 if (mod.manifest?.name) {
                     const nameStr   = mod.manifest.name;
-                    const authorStr = mod.manifest.author ? `автор: ${mod.manifest.author}` : '';
-                    const verStr    = mod.manifest.version ? `v${mod.manifest.version}` : '';
+                    const authorStr = mod.manifest.author  ? `автор: ${mod.manifest.author}` : '';
+                    const verStr    = mod.manifest.version ? `v${mod.manifest.version}`       : '';
                     const tag       = mod.type === 'folder' ? 'мод' : 'legacy';
                     btn.innerHTML   = `
                         <div class="mod-card">
@@ -1865,12 +2094,13 @@ const VN = {
         this.dom.scenarioPanel.classList.add('active');
     },
 
-    hideScenarios() { this.dom.scenarioPanel.classList.remove('active'); },
+    hideScenarios() {
+        this.dom.scenarioPanel.classList.remove('active');
+    },
 
-    // Кнопка «Тестовый сценарий»
     async startTest() {
         this.dom.menu.classList.add('hidden');
-        this.showLoading();
+        this.showLoading('Загрузка...');
         try {
             const parser = new ScenarioParser(null);
             const data   = parser.parse(TEST_SCENARIO);
@@ -1882,7 +2112,6 @@ const VN = {
         }
     },
 
-    // ── Запуск мода по id ──
     async startMod(modId) {
         const mod = ModManager.getMod(modId);
         if (!mod) { LOG.error('Мод не найден:', modId); return; }
@@ -1891,12 +2120,9 @@ const VN = {
         this.showLoading('Загрузка мода...');
 
         try {
-            // Загружаем кастомный CSS мода
             if (mod.custom?.css) await this._loadModCSS(modId, mod.custom.css, mod.basePath);
-            // Загружаем кастомный JS мода
             if (mod.custom?.js)  await this._loadModJS (modId, mod.custom.js,  mod.basePath);
 
-            // Загружаем и конкатенируем все py-файлы
             const code = await this._loadModCode(mod);
             if (!code) throw new Error('Нет кода сценария');
 
@@ -1911,7 +2137,6 @@ const VN = {
         }
     },
 
-    // ── Загрузка кода мода ──
     async _loadModCode(mod) {
         const parts = [];
         const files = mod.type === 'single-file'
@@ -1922,8 +2147,11 @@ const VN = {
             const url = mod.basePath + file;
             try {
                 const res = await fetchNoCache(url);
-                if (res.ok) parts.push(await res.text());
-                else LOG.warn('Файл не найден:', url);
+                if (res.ok) {
+                    parts.push(await res.text());
+                } else {
+                    LOG.warn('Файл не найден:', url);
+                }
             } catch(e) {
                 LOG.warn('Ошибка загрузки файла:', url, e);
             }
@@ -1932,7 +2160,6 @@ const VN = {
         return parts.join('\n');
     },
 
-    // ── Загрузка CSS мода ──
     async _loadModCSS(modId, cssFile, basePath) {
         try {
             const res = await fetchNoCache(basePath + cssFile);
@@ -1943,10 +2170,11 @@ const VN = {
             el.textContent = code;
             document.head.appendChild(el);
             LOG.info('CSS мода загружен:', cssFile);
-        } catch(e) { LOG.warn('CSS мода не загружен:', e); }
+        } catch(e) {
+            LOG.warn('CSS мода не загружен:', e);
+        }
     },
 
-    // ── Загрузка JS мода ──
     async _loadModJS(modId, jsFile, basePath) {
         try {
             const res = await fetchNoCache(basePath + jsFile);
@@ -1954,56 +2182,51 @@ const VN = {
             const code = await res.text();
             if (!window.ModHooks) window.ModHooks = {};
             window.ModHooks[modId] = {};
-            // Выполняем JS в безопасной обёртке с доступом к VN и API хуков
             const fn = new Function('modId', 'VN', 'ModHooks', code);
             fn(modId, VN, window.ModHooks);
             LOG.info('JS мода загружен:', jsFile);
-        } catch(e) { LOG.error('JS мода:', e); }
+        } catch(e) {
+            LOG.error('JS мода:', e);
+        }
     },
 
-    // ── Очистка ресурсов мода ──
     _cleanupMod(modId) {
         if (!modId) return;
-        // CSS
         document.getElementById(`mod-style-${modId}`)?.remove();
-        // JS хуки
         if (window.ModHooks) delete window.ModHooks[modId];
-        // Контекст
         this.modContexts.delete(modId);
     },
 
-    // ── Возврат в главное меню ──
     returnToMainMenu() {
         const modId = this.currentModId;
-        this.isPaused = false;
-        this.dom.pauseMenu.classList.remove('visible');
-        this.dom.pauseOptionsPanel.classList.remove('active');
-        this.isRunning = false;
 
-        if (this.typeAnimationId) clearTimeout(this.typeAnimationId);
+        this._killCurrentSession();
+
+        this.isPaused        = false;
+        this.isRunning       = false;
         this.isTyping        = false;
         this.waitingForClick = false;
 
-        this._stopAudio(0.5);
-        this._clearScene(0);
-        this._clearOverlays();
+        if (this.typeAnimationId) {
+            clearTimeout(this.typeAnimationId);
+            this.typeAnimationId = null;
+        }
 
-        this.dom.textbox.classList.remove('visible');
-        this.dom.clickArea.classList.remove('active');
-        this.dom.choiceContainer.classList.remove('visible');
-        this.dom.continueIndicator.classList.remove('visible');
-        this.dom.chapterOverlay.classList.remove('visible');
-        this.dom.fsTextOverlay.classList.remove('visible');
+        this.dom.pauseMenu.classList.remove('visible');
+        this.dom.pauseOptionsPanel.classList.remove('active');
 
         if (modId) this._cleanupMod(modId);
         this.currentModId = null;
         this.currentMod   = null;
         this.callStack    = [];
+        this._jumpHistory = [];
 
-        setTimeout(() => {
+        const sessionId = this.currentSessionId;
+        this._scheduleTimeout(() => {
+            if (this.currentSessionId !== sessionId) return;
             this.dom.menu.classList.remove('hidden');
             this._initMenu();
-        }, 400);
+        }, 400, sessionId);
     },
 
     // ============================================================
@@ -2011,24 +2234,32 @@ const VN = {
     // ============================================================
 
     async _runScenario(data, mod) {
+        // Убиваем предыдущую сессию перед запуском новой
+        this._killCurrentSession();
+
         this.isRunning       = true;
         this.isPaused        = false;
         this.currentModId    = mod?.id ?? null;
-        this.currentMod      = mod ?? null;
+        this.currentMod      = mod    ?? null;
         this.commands        = data.commands || [];
         this.cmdIndex        = 0;
         this.isTyping        = false;
         this.waitingForClick = false;
         this.callStack       = [];
+        this._jumpHistory    = [];
+        this._includedFiles.clear();
 
-        // Сбрасываем/инициализируем контекст
+        // Инициализируем контекст мода или глобальный контекст
         if (this.currentModId) {
             this.modContexts.set(this.currentModId, {
-                variables: {}, labels: {}, sprites: {}, spritesByFile: {}
+                variables:     {},
+                labels:        {},
+                sprites:       {},
+                spritesByFile: {}
             });
         } else {
-            // Legacy: прямые поля
             this.variables     = {};
+            this.labels        = {};
             this.sprites       = {};
             this.spritesByFile = {};
         }
@@ -2037,44 +2268,23 @@ const VN = {
         if (data.custom_css) data.custom_css.forEach(css => this.addCustomCSS(css));
 
         this.hideLoading();
-
-        // Индексируем метки
         this._indexLabels(this.commands);
-
-        // Подготовка DOM
-        this.dom.textbox.classList.add('visible');
-        this.dom.clickArea.classList.add('active');
-        this.dom.continueIndicator.classList.remove('visible');
+        this._setUIState('hidden');
         this.dom.spritesLayer.innerHTML = '';
-        this.dom.bgCurrent.style.backgroundImage = '';
-        this.dom.bgNext.style.backgroundImage    = '';
-        this.dom.bgNext.style.opacity            = '0';
-        this.dom.daytimeOverlay.style.background = '';
-        this.dom.fadeOverlay.style.transition     = 'none';
-        this.dom.fadeOverlay.style.opacity        = '0';
-        this.dom.fadeOverlay.style.background     = '#000';
-        this.dom.flashOverlay.style.opacity       = '0';
-        this.dom.speaker.textContent  = '';
-        this.dom.dialogue.textContent = '';
-        this.dom.pauseMenu.classList.remove('visible');
-        this.dom.pauseOptionsPanel.classList.remove('active');
-        this.dom.chapterOverlay.classList.remove('visible');
-        this.dom.fsTextOverlay.classList.remove('visible');
-        this._overlayElements = [];
 
-        if (this.currentMusic)  { this.currentMusic.pause();  this.currentMusic  = null; }
-        if (this.currentAmbient){ this.currentAmbient.pause(); this.currentAmbient = null; }
-
-        void this.dom.fadeOverlay.offsetHeight;
-        this._executeNext();
+        const sessionId = this.currentSessionId;
+        requestAnimationFrame(() => {
+            if (this.currentSessionId !== sessionId) return;
+            this._executeNext();
+        });
     },
 
-    // ── Индексирование меток (рекурсивно по командам) ──
     _indexLabels(commands) {
-        const ctx = this.getContext();
-        // Индексируем в контекст
+        const ctx    = this.getContext();
         const labels = (ctx === this) ? (this.labels = {}) : (ctx.labels = {});
-        commands.forEach((cmd, i) => { if (cmd.cmd === 'label') labels[cmd.name] = i; });
+        commands.forEach((cmd, i) => {
+            if (cmd.cmd === 'label') labels[cmd.name] = i;
+        });
     },
 
     _getLabels() {
@@ -2083,7 +2293,7 @@ const VN = {
     },
 
     // ============================================================
-    // КОНВЕЙЕР ВЫПОЛНЕНИЯ (async)
+    // КОНВЕЙЕР ВЫПОЛНЕНИЯ
     // ============================================================
 
     _executeNext() {
@@ -2091,53 +2301,132 @@ const VN = {
             this._endScenario();
             return;
         }
-        const cmd = this.commands[this.cmdIndex++];
-        this._executeCommand(cmd);
+
+        // Каждые 100 команд уступаем поток рендереру, чтобы
+        // избежать подвисаний и переполнения стека на длинных сценариях
+        if (this.cmdIndex > 0 && this.cmdIndex % 100 === 0) {
+            const sessionId = this.currentSessionId;
+            requestAnimationFrame(() => {
+                if (this.currentSessionId !== sessionId) return;
+                const cmd = this.commands[this.cmdIndex++];
+                this._executeCommand(cmd);
+            });
+        } else {
+            const cmd = this.commands[this.cmdIndex++];
+            this._executeCommand(cmd);
+        }
     },
 
     _executeCommand(cmd) {
         if (!cmd?.cmd) { this._executeNext(); return; }
+
+        const startTime = this.debug ? performance.now() : 0;
+
         try {
-            const h = {
-                bg:             () => this.cmdBg(cmd),
-                bg_color:       () => this.cmdBgColor(cmd),
-                fade_out:       () => this.cmdFadeOut(cmd),
-                fade_in:        () => this.cmdFadeIn(cmd),
-                wait:           () => setTimeout(() => this._executeNext(), (cmd.dur || 0.5) * 1000),
-                music:          () => this.cmdMusic(cmd),
-                ambient:        () => this.cmdAmbient(cmd),
-                sfx:            () => this.cmdSfx(cmd),
-                sprite:         () => this.cmdSprite(cmd),
-                show:           () => this.cmdShow(cmd),
-                hide:           () => this.cmdHide(cmd),
-                clear:          () => this.cmdClear(cmd),
-                move:           () => this.cmdMove(cmd),
-                fx:             () => this.cmdFx(cmd),
-                custom_fx:      () => this.cmdCustomFx(cmd),
-                css:            () => { this.addCustomCSS(cmd.code); this._executeNext(); },
-                daytime:        () => this.cmdDaytime(cmd),
-                screen:         () => this.cmdScreen(cmd),
-                chromakey:      () => { this.chromakeyColor = cmd.color; this.chromakeyTolerance = cmd.tolerance || 30; this._executeNext(); },
-                chapter:        () => this.cmdChapter(cmd),
-                scene:          () => this.cmdScene(cmd),
-                fullscreen_text:() => this.cmdFullscreenText(cmd),
-                include:        () => this.cmdInclude(cmd),
-                call:           () => this.cmdCall(cmd),
+            const dispatch = {
+                // ── Фон ──
+                bg:               () => this.cmdBg(cmd),
+                bg_color:         () => this.cmdBgColor(cmd),
+
+                // ── Переходы ──
+                fade_out:         () => this.cmdFadeOut(cmd),
+                fade_in:          () => this.cmdFadeIn(cmd),
+                wait:             () => {
+                    const sid = this.currentSessionId;
+                    this._scheduleTimeout(() => this._executeNext(), (cmd.dur || 0.5) * 1000, sid);
+                },
+
+                // ── Аудио ──
+                music:            () => this.cmdMusic(cmd),
+                ambient:          () => this.cmdAmbient(cmd),
+                sfx:              () => this.cmdSfx(cmd),
+
+                // ── Спрайты ──
+                sprite:           () => this.cmdSprite(cmd),
+                show:             () => this.cmdShow(cmd),
+                hide:             () => this.cmdHide(cmd),
+                clear:            () => this.cmdClear(cmd),
+                move:             () => this.cmdMove(cmd),
+
+                // ── Эффекты ──
+                fx:               () => this.cmdFx(cmd),
+                custom_fx:        () => this.cmdCustomFx(cmd),
+
+                // ── CSS ──
+                css:              () => { this.addCustomCSS(cmd.code); this._executeNext(); },
+
+                // ── Время суток / экран ──
+                daytime:          () => this.cmdDaytime(cmd),
+                screen:           () => this.cmdScreen(cmd),
+                chromakey:        () => {
+                    this.chromakeyColor     = cmd.color;
+                    this.chromakeyTolerance = cmd.tolerance || 30;
+                    this._executeNext();
+                },
+
+                // ── Расширенные ──
+                chapter:          () => this.cmdChapter(cmd),
+                scene:            () => this.cmdScene(cmd),
+                fullscreen_text:  () => this.cmdFullscreenText(cmd),
+
+                // ── Многофайловость ──
+                include:          () => this.cmdInclude(cmd),
+                call:             () => this.cmdCall(cmd),
                 return_from_call: () => this.cmdReturnFromCall(),
-                custom_hook:    () => this.cmdCustomHook(cmd),
-                say:            () => this.cmdSay(cmd),
-                choice:         () => this.cmdChoice(cmd),
-                label:          () => this._executeNext(),
-                jump:           () => { const labels = this._getLabels(); if (labels[cmd.target] !== undefined) this.cmdIndex = labels[cmd.target]; this._executeNext(); },
-                set:            () => { const ctx = this.getContext(); (ctx === this ? ctx : ctx).variables[cmd.var] = cmd.val; this._executeNext(); },
-                add:            () => { const ctx = this.getContext(); const vars = (ctx === this) ? ctx.variables : ctx.variables; vars[cmd.var] = (vars[cmd.var] || 0) + cmd.val; this._executeNext(); },
-                if:             () => this.cmdIf(cmd),
-                if_cmp:         () => this.cmdIfCmp(cmd)
+
+                // ── Хуки ──
+                custom_hook:      () => this.cmdCustomHook(cmd),
+
+                // ── Диалог ──
+                say:              () => this.cmdSay(cmd),
+
+                // ── Выборы ──
+                choice:           () => this.cmdChoice(cmd),
+
+                // ── Метки и прыжки ──
+                label:            () => this._executeNext(),
+                jump:             () => this.cmdJump(cmd),
+
+                // ── Переменные ──
+                set: () => {
+                    const ctx  = this.getContext();
+                    const vars = (ctx === this)
+                        ? (this.variables = this.variables || {})
+                        : ctx.variables;
+                    vars[cmd.var] = cmd.val;
+                    this._executeNext();
+                },
+                add: () => {
+                    const ctx  = this.getContext();
+                    const vars = (ctx === this)
+                        ? (this.variables = this.variables || {})
+                        : ctx.variables;
+                    vars[cmd.var] = (vars[cmd.var] || 0) + cmd.val;
+                    this._executeNext();
+                },
+
+                // ── Условия ──
+                if:     () => this.cmdIf(cmd),
+                if_cmp: () => this.cmdIfCmp(cmd)
             };
-            (h[cmd.cmd] || (() => this._executeNext()))();
+
+            const handler = dispatch[cmd.cmd];
+            if (handler) {
+                handler();
+            } else {
+                LOG.warn('Неизвестная команда:', cmd.cmd, 'line:', cmd._line);
+                this._executeNext();
+            }
         } catch(e) {
-            LOG.error('Команда:', cmd, e);
+            LOG.error('Ошибка команды:', cmd.cmd, 'line:', cmd._line, e);
             this._executeNext();
+        }
+
+        if (this.debug && startTime) {
+            const elapsed = performance.now() - startTime;
+            if (elapsed > 50) {
+                LOG.warn('Медленная команда:', cmd.cmd, elapsed.toFixed(2) + 'ms', 'line:', cmd._line);
+            }
         }
     },
 
@@ -2164,6 +2453,8 @@ const VN = {
     // ============================================================
 
     addCustomCSS(code) {
+        if (!code) return;
+        // Простой хэш для дедупликации
         const hash = code.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
         if (this.customStylesAdded.has(hash)) return;
         this.customStylesAdded.add(hash);
@@ -2184,15 +2475,15 @@ const VN = {
         if (!toLoad.length) return;
         let loaded = 0;
         await Promise.all(toLoad.map(url => new Promise(resolve => {
-            const img = new Image();
-            img.onload = () => {
-                this.imageCache[url] = img;
+            const img    = new Image();
+            img.onload  = () => {
+                this._addToImageCache(url, img);
                 loaded++;
                 this.setLoadingProgress(loaded / toLoad.length * 100);
                 resolve();
             };
             img.onerror = () => { loaded++; resolve(); };
-            img.src = url + '?_t=' + Date.now();
+            img.src     = url + '?_t=' + Date.now();
         })));
     },
 
@@ -2205,39 +2496,37 @@ const VN = {
     // АУДИО
     // ============================================================
 
-    _stopAudio(fadeDur = 0) {
-        if (this.currentMusic) {
-            if (fadeDur > 0) {
-                this._fadeOutAudio(this.currentMusic, fadeDur);
-                const m = this.currentMusic;
-                setTimeout(() => m.pause(), (fadeDur + 0.1) * 1000);
-            } else {
-                this.currentMusic.pause();
-            }
-            this.currentMusic = null;
-        }
-        if (this.currentAmbient) {
-            this.currentAmbient.pause();
-            this.currentAmbient = null;
-        }
-    },
-
     _fadeInAudio(audio, dur, target) {
         audio.volume = 0;
-        const step = target / 30;
-        const iv = setInterval(() => {
-            if (audio.volume + step < target) audio.volume += step;
-            else { audio.volume = target; clearInterval(iv); }
-        }, dur * 1000 / 30);
+        const steps  = 30;
+        const step   = target / steps;
+        const iid    = this._scheduleInterval(() => {
+            if (audio.volume + step < target) {
+                audio.volume = Math.min(audio.volume + step, target);
+            } else {
+                audio.volume = target;
+                clearInterval(iid);
+                this._audioFadeIntervals.delete(iid);
+            }
+        }, (dur * 1000) / steps, this.currentSessionId);
+        this._audioFadeIntervals.add(iid);
     },
 
     _fadeOutAudio(audio, dur) {
         const start = audio.volume;
-        const step  = start / 30;
-        const iv = setInterval(() => {
-            if (audio.volume > step) audio.volume -= step;
-            else { audio.volume = 0; audio.pause(); clearInterval(iv); }
-        }, dur * 1000 / 30);
+        const steps = 30;
+        const step  = start / steps;
+        const iid   = this._scheduleInterval(() => {
+            if (audio.volume > step) {
+                audio.volume = Math.max(audio.volume - step, 0);
+            } else {
+                audio.volume = 0;
+                try { audio.pause(); } catch(e) {}
+                clearInterval(iid);
+                this._audioFadeIntervals.delete(iid);
+            }
+        }, (dur * 1000) / steps, this.currentSessionId);
+        this._audioFadeIntervals.add(iid);
     },
 
     // ============================================================
@@ -2246,25 +2535,31 @@ const VN = {
 
     _getSprites() {
         const ctx = this.getContext();
-        return (ctx === this)
-            ? { sprites: this.sprites, spritesByFile: this.spritesByFile }
-            : { sprites: ctx.sprites, spritesByFile: ctx.spritesByFile };
+        if (ctx === this) {
+            return {
+                sprites:       this.sprites       = this.sprites       || {},
+                spritesByFile: this.spritesByFile = this.spritesByFile || {}
+            };
+        }
+        return { sprites: ctx.sprites, spritesByFile: ctx.spritesByFile };
     },
 
     parsePosition(pos) {
         if (pos === 'left')   return 25;
         if (pos === 'center') return 50;
         if (pos === 'right')  return 75;
-        return parseFloat(pos) || 50;
+        const n = parseFloat(pos);
+        return isNaN(n) ? 50 : n;
     },
 
     _setSpriteImage(container, filename, transition, onComplete) {
         const cacheKey = 'sprites/' + filename;
         let img;
+
         if (this.imageCache[cacheKey]) {
             img = this.imageCache[cacheKey].cloneNode();
         } else {
-            img = new Image();
+            img     = new Image();
             img.src = this._resolveFilePath(filename, 'sprites') + '?_t=' + Date.now();
         }
 
@@ -2280,30 +2575,49 @@ const VN = {
             }
         };
 
-        if (img.complete && img.naturalHeight !== 0) apply(img);
-        else { img.onload = () => apply(img); img.onerror = () => onComplete?.(); }
+        if (img.complete && img.naturalHeight !== 0) {
+            apply(img);
+        } else {
+            img.onload  = () => apply(img);
+            img.onerror = () => {
+                LOG.warn('Спрайт не загружен:', filename);
+                onComplete?.();
+            };
+        }
     },
 
     _replaceImage(inner, newImg, transition = 0) {
+        if (!inner) return;
         const existing = inner.querySelector('img');
         newImg.style.cssText = 'display:block;margin:0 auto;';
+
+        const sessionId = this.currentSessionId;
+
         if (existing && transition > 0) {
+            // Кросс-фейд между старым и новым изображением
             Object.assign(newImg.style, {
-                position: 'absolute', top: '0', left: '50%',
-                transform: 'translateX(-50%)', opacity: '0',
+                position:   'absolute',
+                top:        '0',
+                left:       '50%',
+                transform:  'translateX(-50%)',
+                opacity:    '0',
                 transition: `opacity ${transition}s ease`
             });
             inner.style.position = 'relative';
             inner.appendChild(newImg);
+
             requestAnimationFrame(() => requestAnimationFrame(() => {
-                newImg.style.opacity   = '1';
-                existing.style.transition = `opacity ${transition}s ease`;
-                existing.style.opacity = '0';
+                newImg.style.opacity         = '1';
+                existing.style.transition    = `opacity ${transition}s ease`;
+                existing.style.opacity       = '0';
             }));
-            setTimeout(() => {
-                existing.remove();
+
+            this._scheduleTimeout(() => {
+                if (this.currentSessionId !== sessionId) return;
+                try { existing.remove(); } catch(e) {}
                 newImg.style.cssText = 'display:block;margin:0 auto;';
-            }, transition * 1000 + 50);
+                inner.style.position = '';
+            }, transition * 1000 + 50, sessionId);
         } else if (existing) {
             existing.replaceWith(newImg);
         } else {
@@ -2312,103 +2626,114 @@ const VN = {
     },
 
     _applyChromakeyToImage(img, cb) {
-        const canvas = this.dom.chromakeyCanvas;
-        const ctx    = canvas.getContext('2d');
-        canvas.width = img.width; canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const d = data.data;
-        const r = parseInt(this.chromakeyColor.slice(1,3), 16);
-        const g = parseInt(this.chromakeyColor.slice(3,5), 16);
-        const b = parseInt(this.chromakeyColor.slice(5,7), 16);
-        const tol = this.chromakeyTolerance;
-        for (let i = 0; i < d.length; i += 4) {
-            const dist = Math.sqrt((d[i]-r)**2 + (d[i+1]-g)**2 + (d[i+2]-b)**2);
-            if (dist < tol)        d[i+3] = 0;
-            else if (dist < tol*2) d[i+3] = Math.floor(255 * (dist - tol) / tol);
+        try {
+            const canvas   = this.dom.chromakeyCanvas;
+            const ctx      = canvas.getContext('2d');
+            canvas.width   = img.naturalWidth  || img.width  || 1;
+            canvas.height  = img.naturalHeight || img.height || 1;
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d         = imageData.data;
+
+            const hex = this.chromakeyColor.replace('#', '');
+            const r   = parseInt(hex.slice(0, 2), 16);
+            const g   = parseInt(hex.slice(2, 4), 16);
+            const b   = parseInt(hex.slice(4, 6), 16);
+            const tol = this.chromakeyTolerance;
+
+            for (let i = 0; i < d.length; i += 4) {
+                const dist = Math.sqrt(
+                    (d[i]   - r) ** 2 +
+                    (d[i+1] - g) ** 2 +
+                    (d[i+2] - b) ** 2
+                );
+                if (dist < tol)        d[i+3] = 0;
+                else if (dist < tol*2) d[i+3] = Math.floor(255 * (dist - tol) / tol);
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+            const processed    = new Image();
+            processed.onload   = () => cb(processed);
+            processed.onerror  = () => cb(img); // Фоллбэк: возвращаем оригинал
+            processed.src      = canvas.toDataURL('image/png');
+        } catch(e) {
+            LOG.warn('Chromakey ошибка:', e);
+            cb(img);
         }
-        ctx.putImageData(data, 0, 0);
-        const processed = new Image();
-        processed.onload = () => cb(processed);
-        processed.src = canvas.toDataURL('image/png');
     },
 
-    // ── Очистка спрайтов ──
     _clearSprites(fadeDur, onDone) {
         const { sprites, spritesByFile } = this._getSprites();
-        [...Object.values(sprites), ...Object.values(spritesByFile)].forEach(el => {
-            el.classList.add('hiding'); el.classList.remove('visible');
+        const all = [...Object.values(sprites), ...Object.values(spritesByFile)];
+
+        all.forEach(el => {
+            el.classList.add('hiding');
+            el.classList.remove('visible');
         });
-        setTimeout(() => {
+
+        const sessionId = this.currentSessionId;
+        this._scheduleTimeout(() => {
+            if (this.currentSessionId !== sessionId) return;
             this.dom.spritesLayer.innerHTML = '';
             const ctx = this.getContext();
-            if (ctx === this) { this.sprites = {}; this.spritesByFile = {}; }
-            else              { ctx.sprites = {}; ctx.spritesByFile = {}; }
+            if (ctx === this) {
+                this.sprites       = {};
+                this.spritesByFile = {};
+            } else {
+                ctx.sprites       = {};
+                ctx.spritesByFile = {};
+            }
             onDone?.();
-        }, fadeDur * 1000);
-    },
-
-    // ── Полная очистка сцены ──
-    _clearScene(fadeDur = 0.3) {
-        this._clearSprites(fadeDur, null);
-        setTimeout(() => {
-            this.dom.bgCurrent.style.backgroundImage = '';
-            this.dom.bgNext.style.backgroundImage    = '';
-            this.dom.bgNext.style.opacity            = '0';
-        }, fadeDur * 1000 + 10);
-    },
-
-    // ── Очистка DOM-оверлеев (chapter, fullscreen_text и прочих) ──
-    _clearOverlays() {
-        for (const el of this._overlayElements) {
-            el.remove();
-        }
-        this._overlayElements = [];
-        this.dom.fadeOverlay.style.opacity  = '0';
-        this.dom.flashOverlay.style.opacity = '0';
-        this.dom.daytimeOverlay.style.background = '';
+        }, fadeDur * 1000, sessionId);
     },
 
     // ============================================================
     // КОМАНДЫ — ФОН
     // ============================================================
 
-    cmdBg(cmd) {
-        if (!cmd.file) { this._executeNext(); return; }
-        const path = this._resolveFilePath(cmd.file, 'bg');
-        const url  = path + '?_t=' + Date.now();
-        const dur  = cmd.fade || 0.8;
+cmdBg(cmd) {
+    if (!cmd.file) { this._executeNext(); return; }
 
-        this.dom.bgNext.style.backgroundImage = `url('${url}')`;
-        this.dom.bgNext.style.transition      = `opacity ${dur}s ease-in-out`;
-        void this.dom.bgNext.offsetHeight;
-        this.dom.bgNext.style.opacity = '1';
+    const path = this._resolveFilePath(cmd.file, 'bg');
+    const url  = path + '?_t=' + Date.now();
+    const dur  = cmd.fade || 0.8;
 
-        setTimeout(() => {
-            this.dom.bgCurrent.style.backgroundImage = `url('${url}')`;
-            this.dom.bgNext.style.transition         = 'none';
-            this.dom.bgNext.style.opacity            = '0';
-            this._executeNext();
-        }, dur * 1000);
+    this.dom.bgNext.style.backgroundImage = `url('${url}')`;
+    this.dom.bgNext.style.transition      = `opacity ${dur}s ease-in-out`;
+    void this.dom.bgNext.offsetHeight;
+    this.dom.bgNext.style.opacity = '1';
+
+    const sessionId = this.currentSessionId;
+    this._scheduleTimeout(() => {
+        if (this.currentSessionId !== sessionId) return;
+        
+        // ИСПРАВЛЕНО: очищаем только backgroundColor, не весь background
+        this.dom.bgCurrent.style.backgroundImage  = `url('${url}')`;
+        this.dom.bgCurrent.style.backgroundColor  = ''; // Только цвет, не всё!
+        
+        this.dom.bgNext.style.transition         = 'none';
+        this.dom.bgNext.style.opacity            = '0';
+        this.dom.bgNext.style.backgroundImage    = '';
+        
+        this._executeNext();
+        }, dur * 1000, sessionId);
     },
 
     cmdBgColor(cmd) {
         const dur = cmd.fade || 0.8;
-        // Убираем старые цветовые фоны
+        // Очищаем фоновое изображение, задаём цвет
         this.dom.bgCurrent.style.backgroundImage = '';
         this.dom.bgNext.style.backgroundImage    = '';
         this.dom.bgNext.style.opacity            = '0';
+        this.dom.bgCurrent.style.background      = cmd.color;
+        this.dom.bgCurrent.style.transition      = `background ${dur}s ease`;
 
-        // Ставим цвет через bgCurrent
-        this.dom.bgCurrent.style.background = cmd.color;
-
-        // Анимация через фейд-оверлей (временный)
-        // На самом деле проще просто установить и дать паузу
-        this.dom.bgCurrent.style.transition = `background ${dur}s ease`;
-        setTimeout(() => {
+        const sessionId = this.currentSessionId;
+        this._scheduleTimeout(() => {
+            if (this.currentSessionId !== sessionId) return;
             this.dom.bgCurrent.style.transition = '';
             this._executeNext();
-        }, dur * 1000);
+        }, dur * 1000, sessionId);
     },
 
     // ============================================================
@@ -2420,16 +2745,26 @@ const VN = {
         this.dom.fadeOverlay.style.background  = cmd.color || 'black';
         this.dom.fadeOverlay.style.transition  = `opacity ${dur}s ease-in-out`;
         void this.dom.fadeOverlay.offsetHeight;
-        this.dom.fadeOverlay.style.opacity = '1';
-        setTimeout(() => this._executeNext(), dur * 1000);
+        this.dom.fadeOverlay.style.opacity     = '1';
+
+        const sessionId = this.currentSessionId;
+        this._scheduleTimeout(() => {
+            if (this.currentSessionId !== sessionId) return;
+            this._executeNext();
+        }, dur * 1000, sessionId);
     },
 
     cmdFadeIn(cmd) {
         const dur = cmd.dur || 0.6;
-        this.dom.fadeOverlay.style.transition = `opacity ${dur}s ease-in-out`;
+        this.dom.fadeOverlay.style.transition  = `opacity ${dur}s ease-in-out`;
         void this.dom.fadeOverlay.offsetHeight;
-        this.dom.fadeOverlay.style.opacity = '0';
-        setTimeout(() => this._executeNext(), dur * 1000);
+        this.dom.fadeOverlay.style.opacity     = '0';
+
+        const sessionId = this.currentSessionId;
+        this._scheduleTimeout(() => {
+            if (this.currentSessionId !== sessionId) return;
+            this._executeNext();
+        }, dur * 1000, sessionId);
     },
 
     // ============================================================
@@ -2437,12 +2772,20 @@ const VN = {
     // ============================================================
 
     cmdMusic(cmd) {
+        // Останавливаем текущую музыку
         if (this.currentMusic) {
-            cmd.fade_out > 0
-                ? this._fadeOutAudio(this.currentMusic, cmd.fade_out)
-                : this.currentMusic.pause();
+            if (cmd.fade_out > 0) {
+                this._fadeOutAudio(this.currentMusic, cmd.fade_out);
+            } else {
+                try {
+                    this.currentMusic.pause();
+                    this.currentMusic.src = '';
+                    this.currentMusic.load();
+                } catch(e) {}
+            }
             this.currentMusic = null;
         }
+
         if (!cmd.file) { this._executeNext(); return; }
 
         const path  = this._resolveFilePath(cmd.file, 'music');
@@ -2454,14 +2797,27 @@ const VN = {
 
         audio.play().then(() => {
             const target = (cmd.volume || 1) * this.settings.volMusic / 100;
-            cmd.fade_in > 0 ? this._fadeInAudio(audio, cmd.fade_in, target) : (audio.volume = target);
-        }).catch(e => LOG.warn('Музыка:', e));
+            if (cmd.fade_in > 0) {
+                this._fadeInAudio(audio, cmd.fade_in, target);
+            } else {
+                audio.volume = target;
+            }
+        }).catch(e => LOG.warn('Музыка не воспроизводится:', e));
 
         this._executeNext();
     },
 
     cmdAmbient(cmd) {
-        if (this.currentAmbient) { this.currentAmbient.pause(); this.currentAmbient = null; }
+        // Останавливаем текущий эмбиент
+        if (this.currentAmbient) {
+            try {
+                this.currentAmbient.pause();
+                this.currentAmbient.src = '';
+                this.currentAmbient.load();
+            } catch(e) {}
+            this.currentAmbient = null;
+        }
+
         if (!cmd.file) { this._executeNext(); return; }
 
         const path  = this._resolveFilePath(cmd.file, 'ambient');
@@ -2469,7 +2825,7 @@ const VN = {
         audio.loop   = true;
         audio.volume = (cmd.volume || 1) * this.settings.volAmbient / 100;
         this.currentAmbient = audio;
-        audio.play().catch(e => LOG.warn('Эмбиент:', e));
+        audio.play().catch(e => LOG.warn('Эмбиент не воспроизводится:', e));
         this._executeNext();
     },
 
@@ -2478,7 +2834,7 @@ const VN = {
         const path  = this._resolveFilePath(cmd.file, 'sfx');
         const audio = new Audio(path + '?_t=' + Date.now());
         audio.volume = (cmd.volume || 1) * this.settings.volSfx / 100;
-        audio.play().catch(e => LOG.warn('SFX:', e));
+        audio.play().catch(e => LOG.warn('SFX не воспроизводится:', e));
         this._executeNext();
     },
 
@@ -2488,31 +2844,43 @@ const VN = {
 
     cmdSprite(cmd) {
         if (!cmd.file) { this._executeNext(); return; }
-        const { sprites } = this._getSprites();
-        const ctx = this.getContext();
-        const spritesObj = (ctx === this) ? this.sprites : ctx.sprites;
 
-        let el   = spritesObj[cmd.id];
+        const { sprites } = this._getSprites();
+        const ctx         = this.getContext();
+        const spritesObj  = (ctx === this)
+            ? (this.sprites = this.sprites || {})
+            : ctx.sprites;
+
+        let el    = spritesObj[cmd.id];
         const isNew = !el;
 
         if (isNew) {
-            el = document.createElement('div');
+            el            = document.createElement('div');
             el.className  = 'sprite';
             el.dataset.id = cmd.id;
-            el.appendChild(Object.assign(document.createElement('div'), { className: 'sprite-inner' }));
+            const inner   = document.createElement('div');
+            inner.className = 'sprite-inner';
+            el.appendChild(inner);
             this.dom.spritesLayer.appendChild(el);
             spritesObj[cmd.id] = el;
         }
 
-        if (cmd.pos != null) el.style.left = `${this.parsePosition(cmd.pos)}%`;
+        if (cmd.pos != null) {
+            el.style.left = `${this.parsePosition(cmd.pos)}%`;
+        }
+
         const inner = el.querySelector('.sprite-inner');
         const zoom  = cmd.zoom || 1.0;
         inner.style.setProperty('--sprite-scale', zoom);
         inner.style.transform = `scale(${zoom})`;
-        el.style.transform = `translateX(-50%)${cmd.flip ? ' scaleX(-1)' : ''}`;
+        el.style.transform    = `translateX(-50%)${cmd.flip ? ' scaleX(-1)' : ''}`;
 
         this._setSpriteImage(el, cmd.file, cmd.transition || 0, () => {
-            if (isNew) requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
+            if (isNew) {
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    el.classList.add('visible');
+                }));
+            }
         });
 
         this._executeNext();
@@ -2520,60 +2888,77 @@ const VN = {
 
     cmdShow(cmd) {
         if (!cmd.sprite) { this._executeNext(); return; }
-        const ctx = this.getContext();
-        const sbf = (ctx === this) ? this.spritesByFile : ctx.spritesByFile;
 
-        let el   = sbf[cmd.sprite];
+        const ctx    = this.getContext();
+        const sbf    = (ctx === this)
+            ? (this.spritesByFile = this.spritesByFile || {})
+            : ctx.spritesByFile;
+
+        let el    = sbf[cmd.sprite];
         const isNew = !el;
 
         if (isNew) {
-            el = document.createElement('div');
+            el          = document.createElement('div');
             el.className = 'sprite';
-            el.appendChild(Object.assign(document.createElement('div'), { className: 'sprite-inner' }));
+            const inner  = document.createElement('div');
+            inner.className = 'sprite-inner';
+            el.appendChild(inner);
             this.dom.spritesLayer.appendChild(el);
             sbf[cmd.sprite] = el;
         }
 
-        el.style.left = `${this.parsePosition(cmd.pos)}%`;
-        const inner = el.querySelector('.sprite-inner');
-        const zoom  = cmd.zoom || 1.0;
+        el.style.left      = `${this.parsePosition(cmd.pos)}%`;
+        const inner        = el.querySelector('.sprite-inner');
+        const zoom         = cmd.zoom || 1.0;
         inner.style.setProperty('--sprite-scale', zoom);
         inner.style.transform = `scale(${zoom})`;
         el.style.transform = `translateX(-50%)${cmd.flip ? ' scaleX(-1)' : ''}`;
 
         this._setSpriteImage(el, cmd.sprite, cmd.transition || 0, () => {
-            if (isNew) requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
+            if (isNew) {
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    el.classList.add('visible');
+                }));
+            }
         });
 
         this._executeNext();
     },
 
     cmdHide(cmd) {
-        const fade = (cmd.fade || 0.3) * 1000;
-        const ctx  = this.getContext();
-        const spritesObj = (ctx === this) ? this.sprites      : ctx.sprites;
-        const sbfObj     = (ctx === this) ? this.spritesByFile : ctx.spritesByFile;
+        const fadeDur    = (cmd.fade || 0.3) * 1000;
+        const ctx        = this.getContext();
+        const spritesObj = (ctx === this) ? (this.sprites       || {}) : ctx.sprites;
+        const sbfObj     = (ctx === this) ? (this.spritesByFile || {}) : ctx.spritesByFile;
 
-        const hideEl = el => { el.classList.add('hiding'); el.classList.remove('visible'); };
+        const hideEl = el => {
+            el.classList.add('hiding');
+            el.classList.remove('visible');
+        };
+
+        const sessionId = this.currentSessionId;
 
         if (cmd.target === '__all__' || cmd.target === 'all') {
             [...Object.values(spritesObj), ...Object.values(sbfObj)].forEach(hideEl);
-            setTimeout(() => {
+            this._scheduleTimeout(() => {
+                if (this.currentSessionId !== sessionId) return;
                 this.dom.spritesLayer.innerHTML = '';
                 if (ctx === this) { this.sprites = {}; this.spritesByFile = {}; }
                 else              { ctx.sprites  = {}; ctx.spritesByFile  = {}; }
-            }, fade);
+            }, fadeDur, sessionId);
         } else {
             const el = spritesObj[cmd.target] || sbfObj[cmd.target];
             if (el) {
                 hideEl(el);
-                setTimeout(() => {
-                    el.remove();
+                this._scheduleTimeout(() => {
+                    if (this.currentSessionId !== sessionId) return;
+                    try { el.remove(); } catch(e) {}
                     delete spritesObj[cmd.target];
                     delete sbfObj[cmd.target];
-                }, fade);
+                }, fadeDur, sessionId);
             }
         }
+
         this._executeNext();
     },
 
@@ -2583,79 +2968,184 @@ const VN = {
     },
 
     cmdMove(cmd) {
-        const ctx = this.getContext();
-        const spritesObj = (ctx === this) ? this.sprites      : ctx.sprites;
-        const sbfObj     = (ctx === this) ? this.spritesByFile : ctx.spritesByFile;
-        const el = spritesObj[cmd.target] || sbfObj[cmd.target];
+        const ctx        = this.getContext();
+        const spritesObj = (ctx === this) ? (this.sprites       || {}) : ctx.sprites;
+        const sbfObj     = (ctx === this) ? (this.spritesByFile || {}) : ctx.spritesByFile;
+        const el         = spritesObj[cmd.target] || sbfObj[cmd.target];
+
         if (!el) { this._executeNext(); return; }
 
         const dur = cmd.dur || 0.5;
         el.style.transition = `left ${dur}s cubic-bezier(0.4, 0, 0.2, 1)`;
-        requestAnimationFrame(() => { el.style.left = `${this.parsePosition(cmd.pos)}%`; });
-        setTimeout(() => this._executeNext(), dur * 1000);
+        requestAnimationFrame(() => {
+            el.style.left = `${this.parsePosition(cmd.pos)}%`;
+        });
+
+        const sessionId = this.currentSessionId;
+        this._scheduleTimeout(() => {
+            if (this.currentSessionId !== sessionId) return;
+            el.style.transition = '';
+            this._executeNext();
+        }, dur * 1000, sessionId);
     },
 
     // ============================================================
-    // КОМАНДЫ — ЭФФЕКТЫ
+    // КОМАНДЫ — ЭФФЕКТЫ СПРАЙТОВ
     // ============================================================
 
     cmdFx(cmd) {
-        const ctx = this.getContext();
-        const spritesObj = (ctx === this) ? this.sprites      : ctx.sprites;
-        const sbfObj     = (ctx === this) ? this.spritesByFile : ctx.spritesByFile;
-        const el    = spritesObj[cmd.target] || sbfObj[cmd.target];
-        const inner = el?.querySelector('.sprite-inner');
+        const ctx        = this.getContext();
+        const spritesObj = (ctx === this) ? (this.sprites       || {}) : ctx.sprites;
+        const sbfObj     = (ctx === this) ? (this.spritesByFile || {}) : ctx.spritesByFile;
+        const el         = spritesObj[cmd.target] || sbfObj[cmd.target];
+        const inner      = el?.querySelector('.sprite-inner');
+
         if (!inner) { this._executeNext(); return; }
 
         const fx  = cmd.effect;
         const dur = cmd.param1 || 0.5;
+
+        // Сбрасываем предыдущую анимацию
+        if (this._activeAnimations.has(inner)) {
+            this._activeAnimations.delete(inner);
+        }
         inner.style.animation = 'none';
         void inner.offsetHeight;
 
-        const clear = () => { inner.style.animation = ''; };
-        const eff = {
-            shake:   () => { inner.style.animation = `sprite-shake ${dur}s ease`; setTimeout(clear, dur*1000); },
-            pulse:   () => { inner.style.animation = `sprite-pulse ${dur}s ease infinite`; setTimeout(clear, dur*1000); },
-            bounce:  () => { inner.style.animation = `sprite-bounce ${dur}s cubic-bezier(0.34,1.56,0.64,1)`; setTimeout(clear, dur*1000); },
-            glow:    () => { inner.style.animation = `sprite-glow ${dur}s ease infinite`; setTimeout(clear, dur*1000); },
-            tremble: () => { inner.style.animation = `sprite-tremble 0.06s linear infinite`; setTimeout(clear, dur*1000); },
-            float:   () => { inner.style.animation = `sprite-float ${dur}s ease-in-out infinite`; },
-            sway:    () => { inner.style.animation = `sprite-sway ${dur}s ease-in-out infinite`; setTimeout(clear, dur*1000); },
-            hop:     () => { inner.style.animation = `sprite-hop 0.3s ease`; setTimeout(clear, 350); },
-            nod:     () => { inner.style.animation = `sprite-nod 0.4s ease`; setTimeout(clear, 450); },
-            zoom:    () => {
-                const scale = dur, time = cmd.param2 || 0.3;
+        const sessionId = this.currentSessionId;
+
+        const applyAnim = (cssAnim, clearAfter = null) => {
+            inner.style.animation = cssAnim;
+            this._activeAnimations.set(inner, { css: cssAnim, started: performance.now() });
+            if (clearAfter !== null) {
+                this._scheduleTimeout(() => {
+                    if (this.currentSessionId !== sessionId) return;
+                    inner.style.animation = '';
+                    this._activeAnimations.delete(inner);
+                }, clearAfter, sessionId);
+            }
+        };
+
+        const effects = {
+            shake:   () => applyAnim(`sprite-shake ${dur}s ease`, dur * 1000),
+            pulse:   () => applyAnim(`sprite-pulse ${dur}s ease infinite`, dur * 1000),
+            bounce:  () => applyAnim(`sprite-bounce ${dur}s cubic-bezier(0.34,1.56,0.64,1)`, dur * 1000),
+            glow:    () => applyAnim(`sprite-glow ${dur}s ease infinite`, dur * 1000),
+            tremble: () => applyAnim(`sprite-tremble 0.06s linear infinite`, dur * 1000),
+            // float и sway — бесконечные, очищаются только через reset
+            float:   () => applyAnim(`sprite-float ${dur}s ease-in-out infinite`, null),
+            sway:    () => applyAnim(`sprite-sway ${dur}s ease-in-out infinite`, dur * 1000),
+            hop:     () => applyAnim(`sprite-hop 0.3s ease`, 350),
+            nod:     () => applyAnim(`sprite-nod 0.4s ease`, 450),
+
+            zoom: () => {
+                const scale = dur;
+                const time  = cmd.param2 || 0.3;
                 inner.style.setProperty('--sprite-scale', scale);
                 inner.style.transition = `transform ${time}s cubic-bezier(0.4,0,0.2,1)`;
-                requestAnimationFrame(() => { inner.style.transform = `scale(${scale})`; });
+                requestAnimationFrame(() => {
+                    inner.style.transform = `scale(${scale})`;
+                });
+                // Убираем transition после анимации, не сбрасываем масштаб
+                this._scheduleTimeout(() => {
+                    if (this.currentSessionId !== sessionId) return;
+                    inner.style.transition = '';
+                }, time * 1000 + 50, sessionId);
             },
-            blur:    () => { inner.style.filter = `blur(${dur}px)`; inner.style.transition = 'filter 0.3s ease'; if (cmd.param2) setTimeout(() => { inner.style.filter = ''; }, cmd.param2*1000); },
-            gray:    () => { inner.style.filter = 'grayscale(100%)'; inner.style.transition = 'filter 0.3s ease'; setTimeout(() => { inner.style.filter = ''; }, dur*1000); },
-            bright:  () => { inner.style.filter = `brightness(${dur})`; inner.style.transition = 'filter 0.3s ease'; if (cmd.param2) setTimeout(() => { inner.style.filter = ''; }, cmd.param2*1000); },
-            dim:     () => { inner.style.filter = 'brightness(0.6)'; inner.style.transition = 'filter 0.3s ease'; setTimeout(() => { inner.style.filter = ''; }, dur*1000); },
-            reset:   () => { inner.style.animation = ''; inner.style.filter = ''; inner.style.transform = `scale(${inner.style.getPropertyValue('--sprite-scale') || 1})`; }
+
+            blur: () => {
+                inner.style.filter     = `blur(${dur}px)`;
+                inner.style.transition = 'filter 0.3s ease';
+                if (cmd.param2) {
+                    this._scheduleTimeout(() => {
+                        if (this.currentSessionId !== sessionId) return;
+                        inner.style.filter = '';
+                    }, cmd.param2 * 1000, sessionId);
+                }
+            },
+
+            gray: () => {
+                inner.style.filter     = 'grayscale(100%)';
+                inner.style.transition = 'filter 0.3s ease';
+                this._scheduleTimeout(() => {
+                    if (this.currentSessionId !== sessionId) return;
+                    inner.style.filter = '';
+                }, dur * 1000, sessionId);
+            },
+
+            bright: () => {
+                inner.style.filter     = `brightness(${dur})`;
+                inner.style.transition = 'filter 0.3s ease';
+                if (cmd.param2) {
+                    this._scheduleTimeout(() => {
+                        if (this.currentSessionId !== sessionId) return;
+                        inner.style.filter = '';
+                    }, cmd.param2 * 1000, sessionId);
+                }
+            },
+
+            dim: () => {
+                inner.style.filter     = 'brightness(0.6)';
+                inner.style.transition = 'filter 0.3s ease';
+                this._scheduleTimeout(() => {
+                    if (this.currentSessionId !== sessionId) return;
+                    inner.style.filter = '';
+                }, dur * 1000, sessionId);
+            },
+
+            reset: () => {
+                inner.style.animation  = '';
+                inner.style.filter     = '';
+                inner.style.transition = '';
+                const scale = inner.style.getPropertyValue('--sprite-scale') || '1';
+                inner.style.transform  = `scale(${scale})`;
+                this._activeAnimations.delete(inner);
+            }
         };
-        (eff[fx] || (() => {}))();
+
+        const handler = effects[fx];
+        if (handler) {
+            handler();
+        } else {
+            LOG.warn('Неизвестный fx-эффект:', fx);
+        }
+
         this._executeNext();
     },
 
     cmdCustomFx(cmd) {
-        const ctx = this.getContext();
-        const spritesObj = (ctx === this) ? this.sprites      : ctx.sprites;
-        const sbfObj     = (ctx === this) ? this.spritesByFile : ctx.spritesByFile;
-        const el    = spritesObj[cmd.target] || sbfObj[cmd.target];
-        const inner = el?.querySelector('.sprite-inner');
+        const ctx        = this.getContext();
+        const spritesObj = (ctx === this) ? (this.sprites       || {}) : ctx.sprites;
+        const sbfObj     = (ctx === this) ? (this.spritesByFile || {}) : ctx.spritesByFile;
+        const el         = spritesObj[cmd.target] || sbfObj[cmd.target];
+        const inner      = el?.querySelector('.sprite-inner');
+
         if (!inner) { this._executeNext(); return; }
 
         inner.style.animation = 'none';
         void inner.offsetHeight;
-        const iterStr = cmd.iterations === 'infinite' ? 'infinite' : cmd.iterations;
-        inner.style.animation = `${cmd.animation} ${cmd.duration}s ${cmd.timing} ${iterStr}`;
-        if (!cmd.keep && cmd.iterations !== 'infinite')
-            setTimeout(() => { inner.style.animation = ''; }, cmd.duration * cmd.iterations * 1000 + 50);
+
+        const iterStr = (cmd.iterations === 'infinite') ? 'infinite' : (cmd.iterations || 1);
+        const cssAnim = `${cmd.animation} ${cmd.duration}s ${cmd.timing || 'ease'} ${iterStr}`;
+        inner.style.animation = cssAnim;
+        this._activeAnimations.set(inner, { css: cssAnim, started: performance.now() });
+
+        const sessionId = this.currentSessionId;
+        if (!cmd.keep && cmd.iterations !== 'infinite') {
+            const totalDur = (cmd.duration || 1) * (typeof iterStr === 'number' ? iterStr : 1);
+            this._scheduleTimeout(() => {
+                if (this.currentSessionId !== sessionId) return;
+                inner.style.animation = '';
+                this._activeAnimations.delete(inner);
+            }, totalDur * 1000 + 50, sessionId);
+        }
 
         this._executeNext();
     },
+
+    // ============================================================
+    // КОМАНДЫ — ВРЕМЯ СУТОК / ЭКРАН
+    // ============================================================
 
     cmdDaytime(cmd) {
         const colors = {
@@ -2670,20 +3160,32 @@ const VN = {
     },
 
     cmdScreen(cmd) {
-        const dur = cmd.dur || 0.5;
+        const dur       = cmd.dur || 0.5;
+        const sessionId = this.currentSessionId;
+
         if (cmd.effect === 'shake') {
             this.dom.game.style.animation = 'none';
             void this.dom.game.offsetHeight;
             this.dom.game.style.animation = `screen-shake ${dur}s ease-out`;
-            setTimeout(() => { this.dom.game.style.animation = ''; this._executeNext(); }, dur * 1000);
+            this._scheduleTimeout(() => {
+                if (this.currentSessionId !== sessionId) return;
+                this.dom.game.style.animation = '';
+                this._executeNext();
+            }, dur * 1000, sessionId);
+
         } else if (cmd.effect === 'flash') {
             this.dom.flashOverlay.style.transition = 'none';
             this.dom.flashOverlay.style.opacity    = '1';
             void this.dom.flashOverlay.offsetHeight;
             this.dom.flashOverlay.style.transition = `opacity ${dur}s ease-out`;
             this.dom.flashOverlay.style.opacity    = '0';
-            setTimeout(() => this._executeNext(), dur * 1000);
+            this._scheduleTimeout(() => {
+                if (this.currentSessionId !== sessionId) return;
+                this._executeNext();
+            }, dur * 1000, sessionId);
+
         } else {
+            LOG.warn('Неизвестный screen-эффект:', cmd.effect);
             this._executeNext();
         }
     },
@@ -2692,73 +3194,105 @@ const VN = {
     // КОМАНДЫ — РАСШИРЕННЫЕ (v3)
     // ============================================================
 
-    // ── chapter() — заставка новой главы ──
     cmdChapter(cmd) {
-        const dur = cmd.duration || 2.8;
+        const dur       = cmd.duration || 2.8;
+        const sessionId = this.currentSessionId;
 
-        // Применяем цвет/фон
-        this.dom.chapterOverlay.style.background = cmd.bg || '#000000';
-        this.dom.chapterSubtitle.textContent = cmd.subtitle || '';
-        this.dom.chapterTitleText.textContent = cmd.title || '';
+        // Скрываем текстбокс и спрайты перед заставкой главы
+        this._setUIState('transition');
 
-        // Показываем
+        this.dom.chapterOverlay.style.background  = cmd.bg || '#000000';
+        this.dom.chapterSubtitle.textContent       = cmd.subtitle || '';
+        this.dom.chapterTitleText.textContent      = cmd.title    || '';
         this.dom.chapterOverlay.classList.add('visible');
 
-        setTimeout(() => {
+        // Сбрасываем историю прыжков при новой главе
+        this._jumpHistory = [];
+
+        this._scheduleTimeout(() => {
+            if (this.currentSessionId !== sessionId) return;
             this.dom.chapterOverlay.classList.remove('visible');
-            // Ждём конца transition (0.8s) и идём дальше
-            setTimeout(() => this._executeNext(), 850);
-        }, dur * 1000);
+            this._scheduleTimeout(() => {
+                if (this.currentSessionId !== sessionId) return;
+                this._executeNext();
+            }, 850, sessionId);
+        }, dur * 1000, sessionId);
     },
 
-    // ── scene() — составная команда ──
     cmdScene(cmd) {
-        // Выполняем вложенные команды без прерывания конвейера
+        // Фикс "призрака текстбокса": скрываем UI до смены сцены
+        this._setUIState('transition');
+
         const sub = [];
+
+        // Очищаем спрайты перед сменой фона
+        if (cmd.bg || cmd.music || cmd.ambient || cmd.daytime) {
+            sub.push({ cmd: 'clear', fade: 0.2 });
+            sub.push({ cmd: 'wait',  dur:  0.25 });
+        }
+
         if (cmd.bg)      sub.push({ cmd: 'bg',      file: Resources.resolve(cmd.bg,      'bg'),      fade: cmd.fade });
         if (cmd.music)   sub.push({ cmd: 'music',   file: Resources.resolve(cmd.music,   'music'),   fade_in: 2, fade_out: 1, volume: 1.0 });
         if (cmd.ambient) sub.push({ cmd: 'ambient', file: Resources.resolve(cmd.ambient, 'ambient'), volume: 0.5 });
         if (cmd.daytime) sub.push({ cmd: 'daytime', time: cmd.daytime });
 
-        // Вставляем подкоманды прямо перед текущей позицией
         this.commands.splice(this.cmdIndex, 0, ...sub);
         this._executeNext();
     },
 
-    // ── fullscreen_text() ──
     cmdFullscreenText(cmd) {
-        const dur = cmd.duration || 3.0;
+        const dur       = cmd.duration || 3.0;
+        const sessionId = this.currentSessionId;
 
-        this.dom.fsTextOverlay.style.background = cmd.bg || '#000000';
-        this.dom.fsTextContent.style.color      = cmd.color    || '#ffffff';
-        this.dom.fsTextContent.style.fontSize   = cmd.fontSize || '2em';
-        this.dom.fsTextContent.textContent      = cmd.text || '';
+        // Скрываем текстбокс
+        this._setUIState('transition');
 
+        this.dom.fsTextOverlay.style.background    = cmd.bg       || '#000000';
+        this.dom.fsTextContent.style.color         = cmd.color    || '#ffffff';
+        this.dom.fsTextContent.style.fontSize      = cmd.fontSize || '2em';
+        this.dom.fsTextContent.textContent         = cmd.text     || '';
         this.dom.fsTextOverlay.classList.add('visible');
 
-        setTimeout(() => {
+        this._scheduleTimeout(() => {
+            if (this.currentSessionId !== sessionId) return;
             this.dom.fsTextOverlay.classList.remove('visible');
-            setTimeout(() => this._executeNext(), 650);
-        }, dur * 1000);
+            this._scheduleTimeout(() => {
+                if (this.currentSessionId !== sessionId) return;
+                this._executeNext();
+            }, 650, sessionId);
+        }, dur * 1000, sessionId);
     },
 
-    // ── include() — вставка кода из другого файла ──
+    // ============================================================
+    // КОМАНДЫ — МНОГОФАЙЛОВОСТЬ
+    // ============================================================
+
     async cmdInclude(cmd) {
-        if (!this.currentModId) { this._executeNext(); return; }
-        const mod  = this.currentMod;
-        const url  = mod.basePath + cmd.file;
+        if (!this.currentModId) {
+            LOG.warn('include() работает только в папочных модах');
+            this._executeNext();
+            return;
+        }
+
+        const mod = this.currentMod;
+        const url = mod.basePath + cmd.file;
+
+        // Защита от повторного включения одного файла
+        if (this._includedFiles.has(url)) {
+            LOG.warn('include: файл уже включён, пропускаем:', url);
+            this._executeNext();
+            return;
+        }
 
         try {
             const res = await fetchNoCache(url);
-            if (!res.ok) throw new Error('Not found: ' + url);
-            const code = await res.text();
+            if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + url);
+            const code   = await res.text();
             const parser = new ScenarioParser(this.currentModId);
             const data   = parser.parse(code);
 
-            // Вставляем команды на текущую позицию
+            this._includedFiles.add(url);
             this.commands.splice(this.cmdIndex, 0, ...data.commands);
-
-            // Переиндексируем метки в новом общем массиве
             this._indexLabels(this.commands);
 
             this._executeNext();
@@ -2768,40 +3302,50 @@ const VN = {
         }
     },
 
-    // ── call() — прыжок с возвратом ──
     async cmdCall(cmd) {
-        if (!this.currentModId) { this._executeNext(); return; }
+        if (!this.currentModId) {
+            LOG.warn('call() работает только в папочных модах');
+            this._executeNext();
+            return;
+        }
+
+        // Защита от переполнения стека
+        if (this.callStack.length >= this.maxCallDepth) {
+            LOG.error('Превышена глубина вложенности call():', this.callStack.length);
+            this._executeNext();
+            return;
+        }
+
         const mod = this.currentMod;
         const url = mod.basePath + cmd.file;
 
         try {
             const res = await fetchNoCache(url);
-            if (!res.ok) throw new Error('Not found: ' + url);
-            const code = await res.text();
+            if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + url);
+            const code   = await res.text();
             const parser = new ScenarioParser(this.currentModId);
             const data   = parser.parse(code);
 
-            // Сохраняем текущий стек выполнения
+            // Сохраняем текущее состояние выполнения
             this.callStack.push({
                 commands: this.commands,
                 index:    this.cmdIndex,
-                labels:   this._getLabels()
+                labels:   { ...this._getLabels() }
             });
 
-            // Переключаемся на новый файл
             this.commands = data.commands;
             this.cmdIndex = 0;
 
-            // Индексируем метки нового файла в контексте
+            // Индексируем метки нового файла
+            const newLabels = {};
+            data.commands.forEach((c, i) => { if (c.cmd === 'label') newLabels[c.name] = i; });
             const ctx = this.getContext();
-            const labels = {};
-            data.commands.forEach((c, i) => { if (c.cmd === 'label') labels[c.name] = i; });
-            if (ctx === this) this.labels = labels;
-            else              ctx.labels  = labels;
+            if (ctx === this) this.labels = newLabels;
+            else              ctx.labels  = newLabels;
 
-            // Прыгаем на метку если указана
-            if (cmd.label && labels[cmd.label] !== undefined) {
-                this.cmdIndex = labels[cmd.label];
+            // Если указана метка входа — прыгаем сразу
+            if (cmd.label && newLabels[cmd.label] !== undefined) {
+                this.cmdIndex = newLabels[cmd.label];
             }
 
             this._executeNext();
@@ -2811,18 +3355,18 @@ const VN = {
         }
     },
 
-    // ── return_from_call() ──
     cmdReturnFromCall() {
         if (!this.callStack.length) {
-            LOG.warn('return_from_call без call');
+            LOG.warn('return_from_call() без соответствующего call()');
             this._executeNext();
             return;
         }
-        const state = this.callStack.pop();
+
+        const state   = this.callStack.pop();
         this.commands = state.commands;
         this.cmdIndex = state.index;
 
-        // Восстанавливаем метки
+        // Восстанавливаем метки вызывающего контекста
         const ctx = this.getContext();
         if (ctx === this) this.labels = state.labels;
         else              ctx.labels  = state.labels;
@@ -2830,7 +3374,6 @@ const VN = {
         this._executeNext();
     },
 
-    // ── custom_hook() — вызов JS-функции мода ──
     cmdCustomHook(cmd) {
         const modId = this.currentModId;
         if (!modId) { this._executeNext(); return; }
@@ -2838,11 +3381,27 @@ const VN = {
         if (cmd.type === 'js') {
             try {
                 const fn = window.ModHooks?.[modId]?.[cmd.func];
-                if (typeof fn === 'function') fn(...(cmd.args || []));
-                else LOG.warn('custom_hook: функция не найдена:', cmd.func);
-            } catch(e) { LOG.error('custom_hook:', e); }
+                if (typeof fn !== 'function') {
+                    LOG.warn('custom_hook: функция не найдена:', cmd.func, 'в моде:', modId);
+                } else {
+                    // Таймаут-защита от зависания пользовательского кода
+                    let finished = false;
+                    const guard  = setTimeout(() => {
+                        if (!finished) LOG.error('custom_hook timeout (>5s):', cmd.func);
+                    }, 5000);
+
+                    fn(...(cmd.args || []));
+
+                    finished = true;
+                    clearTimeout(guard);
+                }
+            } catch(e) {
+                LOG.error('custom_hook JS ошибка:', cmd.func, e);
+            }
         } else if (cmd.type === 'css') {
             this.addCustomCSS(cmd.args?.[0] || '');
+        } else {
+            LOG.warn('custom_hook: неизвестный тип:', cmd.type);
         }
 
         this._executeNext();
@@ -2853,18 +3412,21 @@ const VN = {
     // ============================================================
 
     cmdSay(cmd) {
-        this.dom.speaker.textContent  = cmd.name  || '';
-        this.dom.speaker.style.color  = cmd.color || '#fff';
-        this.fullText        = cmd.text || '';
-        this.currentTextIndex = 0;
-        this.waitingForClick  = false;
+        this.dom.speaker.textContent = cmd.name  || '';
+        this.dom.speaker.style.color = cmd.color || '#fff';
+        this.fullText                = cmd.text  || '';
+        this.currentTextIndex        = 0;
+        this.waitingForClick         = false;
         this.dom.dialogue.textContent = '';
-        this.dom.continueIndicator.classList.remove('visible');
 
         if (this.settings.textSpeed >= 100) {
+            // Мгновенный вывод текста
             this.dom.dialogue.textContent = this.fullText;
+            this.isTyping = false;
+            this._setUIState('waiting');
             this._finishText();
         } else {
+            this._setUIState('typing');
             this.isTyping = true;
             this._typeText();
         }
@@ -2872,26 +3434,37 @@ const VN = {
 
     _typeText() {
         if (!this.isTyping) return;
+
         if (this.currentTextIndex < this.fullText.length) {
             this.dom.dialogue.textContent += this.fullText[this.currentTextIndex++];
+            // Скорость печати: от 10мс (быстро) до ~50мс (медленно)
             const delay = Math.max(10, 60 - this.settings.textSpeed * 0.55);
-            this.typeAnimationId = setTimeout(() => this._typeText(), delay);
+            const sessionId = this.currentSessionId;
+            this.typeAnimationId = this._scheduleTimeout(() => {
+                if (this.currentSessionId !== sessionId) return;
+                this._typeText();
+            }, delay, sessionId);
         } else {
             this.isTyping = false;
+            this._setUIState('waiting');
             this._finishText();
         }
     },
 
     _finishTyping() {
-        if (this.typeAnimationId) clearTimeout(this.typeAnimationId);
+        if (this.typeAnimationId) {
+            clearTimeout(this.typeAnimationId);
+            this._activeTimers.delete(this.typeAnimationId);
+            this.typeAnimationId = null;
+        }
         this.isTyping = false;
         this.dom.dialogue.textContent = this.fullText;
+        this._setUIState('waiting');
         this._finishText();
     },
 
     _finishText() {
         this.waitingForClick = true;
-        this.dom.continueIndicator.classList.add('visible');
     },
 
     // ============================================================
@@ -2901,57 +3474,124 @@ const VN = {
     cmdChoice(cmd) {
         const c = this.dom.choiceContainer;
         c.innerHTML = '';
-        this.dom.continueIndicator.classList.remove('visible');
-        this.dom.clickArea.classList.remove('active');
+
+        // Скрываем текстбокс перед выбором
+        this._setUIState('choice');
 
         const labels = this._getLabels();
 
         cmd.options.forEach((opt, i) => {
             const btn = document.createElement('button');
-            btn.className  = 'choice-btn';
+            btn.className   = 'choice-btn';
             btn.textContent = opt.text;
+            // Начальное состояние для анимации появления
             btn.style.opacity   = '0';
             btn.style.transform = 'translateY(10px)';
+
             btn.onclick = () => {
-                c.classList.remove('visible');
-                this.dom.clickArea.classList.add('active');
-                if (labels[opt.target] !== undefined) this.cmdIndex = labels[opt.target];
+                this.dom.choiceContainer.classList.remove('visible');
+                this._setUIState('transition');
+
+                if (labels[opt.target] !== undefined) {
+                    this.cmdIndex = labels[opt.target];
+                } else {
+                    LOG.warn('choice: метка не найдена:', opt.target);
+                }
                 this._executeNext();
             };
+
             c.appendChild(btn);
-            setTimeout(() => {
+
+            // Плавное появление кнопок с задержкой
+            const sessionId = this.currentSessionId;
+            this._scheduleTimeout(() => {
+                if (this.currentSessionId !== sessionId) return;
                 btn.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
                 btn.style.opacity    = '1';
                 btn.style.transform  = 'translateY(0)';
-            }, i * 80);
+            }, i * 80, sessionId);
         });
-
-        c.classList.add('visible');
     },
 
     // ============================================================
-    // КОМАНДЫ — УСЛОВИЯ И ПЕРЕМЕННЫЕ
+    // КОМАНДЫ — ПРЫЖКИ (с защитой от зацикливания)
+    // ============================================================
+
+    cmdJump(cmd) {
+        const labels = this._getLabels();
+
+        if (labels[cmd.target] === undefined) {
+            LOG.warn('jump: метка не найдена:', cmd.target, '— выполнение продолжается линейно');
+            this._executeNext();
+            return;
+        }
+
+        // Защита от бесконечного цикла
+        this._jumpHistory.push(cmd.target);
+
+        if (this._jumpHistory.length > this._maxJumpCount) {
+            // Проверяем последние 20 прыжков на повторяемость
+            const recent  = this._jumpHistory.slice(-20);
+            const allSame = recent.every(l => l === cmd.target);
+
+            if (allSame) {
+                LOG.error('Обнаружен бесконечный цикл на метке:', cmd.target, '— сценарий принудительно завершён');
+                this._endScenario();
+                return;
+            }
+
+            // Общая проверка: слишком много прыжков — тоже нехорошо
+            if (this._jumpHistory.length > this._maxJumpCount * 2) {
+                LOG.error('Слишком много прыжков (>' + (this._maxJumpCount * 2) + ') — сценарий принудительно завершён');
+                this._endScenario();
+                return;
+            }
+        }
+
+        this.cmdIndex = labels[cmd.target];
+        this._executeNext();
+    },
+
+    // ============================================================
+    // КОМАНДЫ — УСЛОВИЯ
     // ============================================================
 
     cmdIf(cmd) {
         const ctx  = this.getContext();
         const vars = (ctx === this) ? (this.variables || {}) : ctx.variables;
-        if (vars[cmd.var] && cmd.then?.length)
-            cmd.then.forEach(c => this._executeCommand(c));
+
+        if (vars[cmd.var] && cmd.then?.length) {
+            // Вставляем команды then прямо в текущую очередь
+            this.commands.splice(this.cmdIndex, 0, ...cmd.then);
+        }
         this._executeNext();
     },
 
     cmdIfCmp(cmd) {
         const ctx  = this.getContext();
         const vars = (ctx === this) ? (this.variables || {}) : ctx.variables;
-        const v = vars[cmd.var] || 0;
+        const v    = vars[cmd.var] ?? 0;
+
         const ops = {
-            '>=': v >= cmd.val, '<=': v <= cmd.val,
-            '>':  v >  cmd.val, '<':  v <  cmd.val,
-            '==': v === cmd.val,'!=': v !== cmd.val
+            '>=': () => v >= cmd.val,
+            '<=': () => v <= cmd.val,
+            '>':  () => v >  cmd.val,
+            '<':  () => v <  cmd.val,
+            '==': () => v === cmd.val,
+            '!=': () => v !== cmd.val
         };
-        if (ops[cmd.op] && cmd.then?.length)
-            cmd.then.forEach(c => this._executeCommand(c));
+
+        const check = ops[cmd.op];
+        if (!check) {
+            LOG.warn('if_cmp: неизвестный оператор:', cmd.op);
+            this._executeNext();
+            return;
+        }
+
+        if (check() && cmd.then?.length) {
+            // Вставляем команды then прямо в текущую очередь
+            this.commands.splice(this.cmdIndex, 0, ...cmd.then);
+        }
         this._executeNext();
     },
 
@@ -2961,40 +3601,38 @@ const VN = {
 
     _endScenario() {
         const modId = this.currentModId;
-        this.isRunning = false;
-        this.isPaused  = false;
 
-        this.dom.pauseMenu.classList.remove('visible');
-        this.dom.pauseOptionsPanel.classList.remove('active');
-        this.dom.chapterOverlay.classList.remove('visible');
-        this.dom.fsTextOverlay.classList.remove('visible');
+        // Убиваем сессию — останавливает все таймеры, аудио и анимации
+        this._killCurrentSession();
 
+        this.isRunning       = false;
+        this.isPaused        = false;
+        this.isTyping        = false;
+        this.waitingForClick = false;
+
+        if (this.typeAnimationId) {
+            clearTimeout(this.typeAnimationId);
+            this.typeAnimationId = null;
+        }
+
+        const sessionId = this.currentSessionId;
+
+        // Плавное затухание fade-оверлея перед возвратом в меню
         this.dom.fadeOverlay.style.transition = 'opacity 0.8s ease';
         void this.dom.fadeOverlay.offsetHeight;
         this.dom.fadeOverlay.style.opacity    = '0';
-        this.dom.flashOverlay.style.opacity   = '0';
-        this.dom.daytimeOverlay.style.background = '';
-
-        this._clearSprites(0.4, null);
-        this._clearOverlays();
-
-        this.dom.textbox.classList.remove('visible');
-        this.dom.clickArea.classList.remove('active');
-        this.dom.choiceContainer.classList.remove('visible');
-        this.dom.continueIndicator.classList.remove('visible');
-
-        this._stopAudio(1.0);
 
         if (modId) this._cleanupMod(modId);
         this.currentModId = null;
         this.currentMod   = null;
         this.callStack    = [];
+        this._jumpHistory = [];
 
-        setTimeout(() => {
-            this.dom.fadeOverlay.style.opacity = '0';
+        this._scheduleTimeout(() => {
+            if (this.currentSessionId !== sessionId) return;
             this.dom.menu.classList.remove('hidden');
             this._initMenu();
-        }, 600);
+        }, 800, sessionId);
     }
 };
 
