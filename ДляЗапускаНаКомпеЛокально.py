@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """
 VN Engine - Dev Server
-Локальный сервер для тестирования. Даёт браузеру /api/resources
-чтобы работал рандом и полный список сценариев.
+Локальный сервер для тестирования HTML-файлов.
 """
 
 import sys
 import os
 
 # ============================================================
-# Проверка версии Python — ДО всех остальных импортов
+# Проверка версии Python
 # ============================================================
 if sys.version_info < (3, 7):
     print(f"\n❌ Нужен Python 3.7 или новее.")
@@ -19,25 +18,14 @@ if sys.version_info < (3, 7):
     sys.exit(1)
 
 # ============================================================
-# Проверка стандартных модулей
-# (все из stdlib, pip не нужен — но мало ли)
+# Проверка модулей
 # ============================================================
-REQUIRED_MODULES = [
-    ('http.server', None),
-    ('json',        None),
-    ('pathlib',     None),
-    ('mimetypes',   None),
-    ('threading',   None),
-    ('webbrowser',  None),
-    ('urllib.parse', None),
-]
-
 missing = []
-for module_name, pip_name in REQUIRED_MODULES:
+for module in ['http.server', 'json', 'pathlib', 'mimetypes', 'threading', 'webbrowser', 'urllib.parse']:
     try:
-        __import__(module_name)
+        __import__(module)
     except ImportError:
-        missing.append(pip_name or module_name)
+        missing.append(module)
 
 if missing:
     print("\n❌ Отсутствуют необходимые модули:")
@@ -48,20 +36,23 @@ if missing:
     sys.exit(1)
 
 # ============================================================
-# Всё ок — импортируем
+# Импорты
 # ============================================================
 import http.server
 import json
 import threading
 import webbrowser
 import mimetypes
+import signal
+import ctypes
+import socket
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 
 # ============================================================
 # Конфиг
 # ============================================================
-PORT     = 4931
+PORT     = 4933
 BASE_DIR = Path(__file__).parent
 
 SPRITES_DIR   = BASE_DIR / "sprites"
@@ -73,11 +64,13 @@ IMG_EXTS      = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
 AUDIO_EXTS    = {".ogg", ".mp3", ".wav"}
 SCENARIO_EXTS = {".py"}
 
+# Глобальная ссылка на сервер — нужна для остановки
+_server = None
+
 # ============================================================
 # Утилиты
 # ============================================================
 def scan(directory, exts):
-    """Рекурсивно сканирует папку и возвращает список файлов."""
     files = []
     if directory.exists():
         for f in directory.rglob("*"):
@@ -87,31 +80,26 @@ def scan(directory, exts):
 
 def get_resources():
     return {
-        "sprites":   scan(SPRITES_DIR,          IMG_EXTS),
-        "bg":        scan(BG_DIR,               IMG_EXTS),
-        "music":     scan(AUDIO_DIR / "music",  AUDIO_EXTS),
-        "ambient":   scan(AUDIO_DIR / "ambient",AUDIO_EXTS),
-        "sfx":       scan(AUDIO_DIR / "sfx",    AUDIO_EXTS),
-        "scenarios": scan(SCENARIOS_DIR,         SCENARIO_EXTS),
+        "sprites":   scan(SPRITES_DIR,           IMG_EXTS),
+        "bg":        scan(BG_DIR,                IMG_EXTS),
+        "music":     scan(AUDIO_DIR / "music",   AUDIO_EXTS),
+        "ambient":   scan(AUDIO_DIR / "ambient", AUDIO_EXTS),
+        "sfx":       scan(AUDIO_DIR / "sfx",     AUDIO_EXTS),
+        "scenarios": scan(SCENARIOS_DIR,          SCENARIO_EXTS),
     }
 
 # ============================================================
 # HTTP-обработчик
 # ============================================================
-class VNHandler(http.server.SimpleHTTPRequestHandler):
+class VNHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
 
-        # Главная страница
         if path in ('/', '/index.html'):
             self._serve_html()
-
-        # API: список ресурсов для рандома и меню сценариев
         elif path == '/api/resources':
             self._send_json(get_resources())
-
-        # Статические ресурсы
         elif path.startswith('/sprites/'):
             self._serve_file(SPRITES_DIR / unquote(path[9:]))
         elif path.startswith('/bg/'):
@@ -120,13 +108,10 @@ class VNHandler(http.server.SimpleHTTPRequestHandler):
             self._serve_file(AUDIO_DIR / unquote(path[7:]))
         elif path.startswith('/scenarios/'):
             self._serve_file(SCENARIOS_DIR / unquote(path[11:]))
-
         else:
             self.send_error(404, "Not found")
 
-    # ----------------------------------------------------------
     def _serve_html(self):
-        """Раздаёт выбранный HTML-файл."""
         html_path = getattr(self.server, 'selected_html', None)
         if not html_path or not html_path.exists():
             self.send_error(404, "HTML file not found")
@@ -160,9 +145,72 @@ class VNHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
     def log_message(self, fmt, *args):
-        # Только ошибки в консоль
+        # Только не-200 и не-304 в консоль
         if args and str(args[1]) not in ('200', '304'):
             print(f"  [{args[1]}] {args[0]}")
+
+# ============================================================
+# Сервер с таймаутом сокета — чтобы нормально реагировал
+# на shutdown() и не висел вечно в accept()
+# ============================================================
+class VNServer(http.server.HTTPServer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Таймаут на сокете: каждые 0.5 сек сервер выходит из
+        # блокирующего accept() и проверяет флаг остановки
+        self.socket.settimeout(0.5)
+
+    def serve_forever(self, poll_interval=0.5):
+        self._BaseServer__is_shut_down.clear()
+        try:
+            import selectors
+            with selectors.DefaultSelector() as sel:
+                sel.register(self, selectors.EVENT_READ)
+                while not self._BaseServer__shutdown_request:
+                    ready = sel.select(poll_interval)
+                    if self._BaseServer__shutdown_request:
+                        break
+                    if ready:
+                        self._handle_request_noblock()
+                    self.service_actions()
+        finally:
+            self._BaseServer__shutdown_request = False
+            self._BaseServer__is_shut_down.set()
+
+# ============================================================
+# Обработка сигналов завершения
+# ============================================================
+def shutdown_server(signum=None, frame=None):
+    global _server
+    if _server:
+        print("\n\n  ✓ Остановка сервера...")
+        # shutdown() вызываем в отдельном потоке,
+        # чтобы не дедлочить serve_forever()
+        t = threading.Thread(target=_server.shutdown, daemon=True)
+        t.start()
+
+# Регистрируем обработчики сигналов
+signal.signal(signal.SIGINT,  shutdown_server)  # Ctrl+C
+signal.signal(signal.SIGTERM, shutdown_server)  # kill / завершение процесса
+
+# На Windows дополнительно ловим закрытие консоли
+if sys.platform == 'win32':
+    try:
+        HANDLER_ROUTINE = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_uint)
+
+        @HANDLER_ROUTINE
+        def _win_console_handler(event):
+            # CTRL_CLOSE_EVENT = 2, CTRL_LOGOFF_EVENT = 5, CTRL_SHUTDOWN_EVENT = 6
+            if event in (0, 1, 2, 5, 6):
+                shutdown_server()
+                # Небольшая пауза — даём серверу время закрыться
+                import time
+                time.sleep(1.5)
+            return False
+
+        ctypes.windll.kernel32.SetConsoleCtrlHandler(_win_console_handler, True)
+    except Exception as e:
+        print(f"  (предупреждение: не удалось установить обработчик консоли: {e})")
 
 # ============================================================
 # Выбор HTML-файла
@@ -179,70 +227,85 @@ def select_html():
         return None
 
     if len(files) == 1:
-        print(f"\n✓ Найден файл: {files[0]}")
+        print(f"\n  ✓ Найден файл: {files[0]}")
         return Path(files[0])
 
-    print("\n📁 Доступные HTML-файлы:\n")
+    print("\n  📁 Доступные HTML-файлы:\n")
     for i, name in enumerate(files, 1):
-        print(f"   {i}. {name}")
+        print(f"     {i}. {name}")
 
     while True:
         try:
-            raw = input(f"\nВыберите файл [1–{len(files)}]: ").strip()
+            raw = input(f"\n  Выберите файл [1–{len(files)}]: ").strip()
             idx = int(raw) - 1
             if 0 <= idx < len(files):
                 return Path(files[idx])
-            print(f"   Введите число от 1 до {len(files)}")
+            print(f"  Введите число от 1 до {len(files)}")
         except ValueError:
-            print("   Введите число.")
+            print("  Введите число.")
         except KeyboardInterrupt:
             print("\n\n  Отменено.")
             return None
 
 # ============================================================
+# Проверка доступности порта
+# ============================================================
+def is_port_free(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.bind(('', port))
+            return True
+        except OSError:
+            return False
+
+# ============================================================
 # Точка входа
 # ============================================================
 def main():
+    global _server
+
     print("=" * 55)
     print("  VN Engine — Dev Server")
     print("=" * 55)
 
     selected = select_html()
     if not selected:
-        input("\nНажмите Enter для выхода...")
+        input("\n  Нажмите Enter для выхода...")
+        return
+
+    # Проверяем порт
+    if not is_port_free(PORT):
+        print(f"\n❌ Порт {PORT} уже занят.")
+        print(f"   Закройте другой экземпляр сервера.\n")
+        input("  Нажмите Enter для выхода...")
         return
 
     print(f"\n  Файл : {selected}")
     print(f"  URL  : http://localhost:{PORT}/")
-    print(f"\n  Ctrl+C — остановить сервер\n")
+    print(f"\n  Закройте окно или нажмите Ctrl+C для остановки")
     print("-" * 55)
 
     try:
-        with http.server.HTTPServer(('', PORT), VNHandler) as httpd:
-            # Прокидываем выбранный файл в обработчик
-            httpd.selected_html = selected.resolve()
+        _server = VNServer(('', PORT), VNHandler)
+        _server.selected_html = selected.resolve()
 
-            # Открываем браузер чуть позже
-            threading.Timer(0.6, lambda: webbrowser.open(f'http://localhost:{PORT}/')).start()
+        # Открываем браузер через 0.6 сек в фоновом потоке
+        threading.Timer(
+            0.6,
+            lambda: webbrowser.open(f'http://localhost:{PORT}/')
+        ).start()
 
-            httpd.serve_forever()
-
-    except OSError as e:
-        if e.errno == 98 or e.errno == 10048:  # Порт уже занят
-            print(f"\n❌ Порт {PORT} уже занят.")
-            print(f"   Закройте другой сервер или смените PORT в скрипте.\n")
-        else:
-            print(f"\n❌ Ошибка запуска сервера: {e}\n")
-        input("Нажмите Enter для выхода...")
-
-    except KeyboardInterrupt:
-        print("\n\n  ✓ Сервер остановлен.\n")
+        # Запускаем — блокирует до вызова shutdown()
+        _server.serve_forever()
 
     except Exception as e:
-        print(f"\n❌ Неожиданная ошибка: {e}")
+        print(f"\n❌ Ошибка: {e}")
         import traceback
         traceback.print_exc()
-        input("\nНажмите Enter для выхода...")
+        input("\n  Нажмите Enter для выхода...")
+        return
+
+    print("  Сервер остановлен. До свидания!\n")
 
 if __name__ == '__main__':
     main()
